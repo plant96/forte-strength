@@ -7,6 +7,15 @@ import { HARRIS_BENEDICT_REVISED, KATCH_MCARDLE, MIFFLIN_ST_JEOR } from "./bmr"
 import { getIntensityLevel, type IntensityId } from "./constants"
 import { GLOSSARY, type SymbolId } from "./glossary"
 import { calculateGoalTargets, type GoalTargets } from "./goals"
+import {
+  calculateMacros,
+  MACRO_INFO,
+  MACRO_SPLITS,
+  type CalorieTarget,
+  type MacroAmount,
+  type MacroSplit,
+} from "./macros"
+import { TEF_NOTE, TEF_SOURCE } from "./tef"
 import type { TdeeResult } from "./tdee"
 
 /** A formula written twice: TeX for display, plain text for copying. */
@@ -40,10 +49,10 @@ export interface FormulaStep {
   symbols: SymbolId[]
   notes: string[]
   gauge?: Gauge
-  extra?: "intensity-table" | "targets-table"
+  extra?: "intensity-table" | "targets-table" | "macros-table"
 }
 
-export type BreakdownSectionId = "bmr" | "activity" | "tdee" | "targets"
+export type BreakdownSectionId = "bmr" | "activity" | "tdee" | "targets" | "macros"
 
 export interface BreakdownSection {
   id: BreakdownSectionId
@@ -66,6 +75,10 @@ export interface Breakdown {
   goalUnit: WeightUnit
   intensityId: IntensityId
   totals: { bmr: number; multiplier: number; tdee: number }
+  macros: {
+    target: CalorieTarget
+    diets: { split: MacroSplit; amounts: MacroAmount[] }[]
+  }
 }
 
 export const SOURCES = [
@@ -93,6 +106,15 @@ export const SOURCES = [
     label: "Activity multiplier",
     citation:
       "Forte Strength Systems' own model: a saturating step curve plus a saturating training curve, minus a small overlap correction.",
+  },
+  {
+    label: "Macro grams",
+    citation:
+      "Atwater general factors: 4 kcal per gram of protein and carbohydrate, 9 kcal per gram of fat. The three splits are Forte Strength Systems' recommendations.",
+  },
+  {
+    label: "Thermic effect of food (not included)",
+    citation: TEF_SOURCE,
   },
 ] as const
 
@@ -133,6 +155,7 @@ export function buildBreakdown(
   values: TdeeFormValues,
   result: TdeeResult,
   goalUnit: WeightUnit,
+  calorieTarget: CalorieTarget,
 ): Breakdown {
   const { input, bmr, activity, intensityScore, tdee } = result
   const { weightKg: w, heightCm: h, ageYears: a, sex, bodyFatPercent: bf } = input
@@ -498,13 +521,56 @@ export function buildBreakdown(
     ],
   }
 
+  const diets = MACRO_SPLITS.map((split) => ({
+    split,
+    amounts: calculateMacros(calorieTarget.calories, split),
+  }))
+  const example = diets[0]
+  const e = calorieTarget.calories
+  const exampleLines = (example?.amounts ?? []).map((amount) => {
+    const { label, kcalPerGram } = MACRO_INFO[amount.macro]
+    const share = formatNumber(amount.percent / 100, 3)
+    return {
+      tex: `\\text{${label}} &= \\frac{${texValue(e, DECIMALS.kcal)} \\times ${share}}{${kcalPerGram}} = ${texNumber(amount.grams, 1)}\\ \\text{g}`,
+      text: `${label}: ${formatNumber(e, DECIMALS.kcal)} × ${share} / ${kcalPerGram} = ${formatNumber(amount.grams, 1)} g`,
+    }
+  })
+
+  const macrosSection: BreakdownSection = {
+    id: "macros",
+    title: "Macronutrients",
+    description:
+      "Each diet splits your calorie target by percentage, then converts each macro's calories into grams.",
+    steps: [
+      {
+        id: "macros",
+        title: "Macro grams",
+        description: `Built from your calorie target: ${calorieTarget.label} (${formatNumber(e, 0)} kcal/day). You can change it in the macros section.`,
+        formula: {
+          tex: "g = \\frac{E \\times s}{k}",
+          text: "g = E × s / k",
+        },
+        substituted: {
+          tex: `\\begin{aligned} ${exampleLines.map((line) => line.tex).join(" \\\\ ")} \\end{aligned}`,
+          text: exampleLines.map((line) => line.text).join("\n"),
+        },
+        symbols: ["E", "s", "k", "g"],
+        notes: [
+          `Worked example uses the ${example?.split.name ?? "Standard"} split. The table covers all three.`,
+        ],
+        extra: "macros-table",
+      },
+    ],
+  }
+
   return {
     inputs,
-    sections: [bmrSection, activitySection, tdeeSection, targetsSection],
+    sections: [bmrSection, activitySection, tdeeSection, targetsSection, macrosSection],
     targets,
     goalUnit,
     intensityId,
     totals: { bmr: bmr.average, multiplier: activity.multiplier, tdee },
+    macros: { target: calorieTarget, diets },
   }
 }
 
@@ -554,8 +620,23 @@ export function breakdownToText(breakdown: Breakdown) {
     )
   })
 
+  const { macros } = breakdown
   lines.push(
     "",
+    `MACROS (${macros.target.label}, ${formatNumber(macros.target.calories, 0)} kcal/day)`,
+  )
+  for (const diet of macros.diets) {
+    const parts = diet.amounts.map(
+      (amount) =>
+        `${MACRO_INFO[amount.macro].label.toLowerCase()} ${formatNumber(amount.grams, 0)} g (${amount.percent}%)`,
+    )
+    const favorite = diet.split.coachFavorite ? " [Coach Ty's favorite]" : ""
+    lines.push(`  ${diet.split.name}${favorite}: ${parts.join(", ")}`)
+  }
+
+  lines.push(
+    "",
+    TEF_NOTE,
     "Displayed values are rounded; every calculation runs at full precision.",
     "",
     "VARIABLES",

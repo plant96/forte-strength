@@ -6,6 +6,7 @@ import { Tex } from "@/components/math/tex"
 import { INTENSITY_LEVELS, type IntensityId } from "../../lib/constants"
 import { formatNumber, type Breakdown, type FormulaStep, type StepResult } from "../../lib/formulas"
 import { GLOSSARY, type SymbolId } from "../../lib/glossary"
+import { MACRO_INFO, MACROS } from "../../lib/macros"
 import { Gauge } from "./gauge"
 
 interface FormulaStepCardProps {
@@ -46,6 +47,7 @@ export function FormulaStepCard({ step, breakdown }: FormulaStepCardProps) {
       {step.gauge && <Gauge gauge={step.gauge} label={step.title} />}
       {step.extra === "intensity-table" && <IntensityTable activeId={breakdown.intensityId} />}
       {step.extra === "targets-table" && <TargetsTable breakdown={breakdown} />}
+      {step.extra === "macros-table" && <MacrosTable breakdown={breakdown} />}
 
       {step.notes.length > 0 && (
         <ul className="flex flex-col gap-2 px-4 pb-4">
@@ -136,6 +138,7 @@ function IntensityTable({ activeId }: { activeId: IntensityId }) {
                 <td className="px-3 py-1.5">
                   {level.label}
                   {active && <span className="ml-2 text-xs font-medium text-highlight">Yours</span>}
+                  <span className="block text-xs text-muted-foreground">{level.description}</span>
                 </td>
                 <td
                   className={cn(
@@ -200,6 +203,54 @@ function TargetsTable({ breakdown }: { breakdown: Breakdown }) {
               </tr>
             )
           })}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+function MacrosTable({ breakdown }: { breakdown: Breakdown }) {
+  const { diets, target } = breakdown.macros
+
+  return (
+    <div className="mx-4 mb-4 overflow-x-auto rounded-lg ring-1 ring-foreground/10">
+      <table className="w-full min-w-104 text-sm tabular-nums">
+        <caption className="sr-only">
+          Grams per day for each macro split at {formatNumber(target.calories, 0)} kcal
+        </caption>
+        <thead className="bg-muted/40 text-xs text-muted-foreground">
+          <tr>
+            <th scope="col" className="px-3 py-2 text-left font-medium">
+              Split
+            </th>
+            {MACROS.map((macro) => (
+              <th key={macro} scope="col" className="px-3 py-2 text-right font-medium">
+                {MACRO_INFO[macro].label}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-border">
+          {diets.map(({ split, amounts }) => (
+            <tr key={split.id}>
+              <th scope="row" className="px-3 py-2 text-left font-medium">
+                {split.name}
+                {split.coachFavorite && (
+                  <span className="ml-1.5 text-[0.65rem] font-medium text-highlight">
+                    ★ Coach Ty&apos;s favorite
+                  </span>
+                )}
+              </th>
+              {amounts.map((amount) => (
+                <td key={amount.macro} className="px-3 py-2 text-right">
+                  {formatNumber(amount.grams, 0)} g
+                  <span className="block text-[0.7rem] text-muted-foreground">
+                    {amount.percent}%
+                  </span>
+                </td>
+              ))}
+            </tr>
+          ))}
         </tbody>
       </table>
     </div>

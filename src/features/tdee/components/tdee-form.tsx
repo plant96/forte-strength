@@ -1,6 +1,6 @@
 "use client"
 
-import { CalculatorIcon, ImageIcon, MinusIcon, PlusIcon } from "lucide-react"
+import { CalculatorIcon, MinusIcon, PlusIcon } from "lucide-react"
 import { Controller, useFormState, useWatch, type UseFormReturn } from "react-hook-form"
 
 import { Button } from "@/components/ui/button"
@@ -49,6 +49,7 @@ import {
 } from "../lib/constants"
 import { parseNumberInput, type TdeeFormInput, type TdeeFormValues } from "../schema"
 import { BodyFatReferenceDialog } from "./body-fat-reference-dialog"
+import { IntensityReferenceDialog } from "./intensity-reference-dialog"
 import { UnitInput } from "./unit-input"
 
 interface TdeeFormProps {
@@ -351,16 +352,26 @@ export function TdeeForm({ form, onCalculate, hasCalculated }: TdeeFormProps) {
                           ))}
                         </SelectContent>
                       </Select>
-                      {/* Intentionally inert until the intensity reference exists. */}
-                      <Button type="button" variant="outline" className="h-10 shrink-0">
-                        <ImageIcon />
-                        Visual reference
-                      </Button>
+                      <IntensityReferenceDialog
+                        selected={noTraining ? "none" : (selectedIntensity?.id ?? null)}
+                      />
                     </div>
                     <FieldDescription>
-                      {noTraining
-                        ? "Set to “No training” because you train 0 sessions a week."
-                        : (selectedIntensity?.description ?? "How hard a typical session feels.")}
+                      {noTraining ? (
+                        "Set to “No training” because you train 0 sessions a week."
+                      ) : selectedIntensity ? (
+                        <>
+                          <span className="font-medium text-foreground/85">
+                            {selectedIntensity.label}:
+                          </span>{" "}
+                          {selectedIntensity.description}
+                          {selectedIntensity.note && (
+                            <span className="mt-1 block text-xs">{selectedIntensity.note}</span>
+                          )}
+                        </>
+                      ) : (
+                        "How hard a typical session feels. Not sure? Open the reference."
+                      )}
                     </FieldDescription>
                     <FieldError errors={[fieldState.error]} />
                   </Field>

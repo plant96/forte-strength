@@ -47,6 +47,12 @@ plus an entry in `config/site.ts` so they show up in the nav and sitemap.
   `features/tdee/lib/activity.ts`.
 - **Targets** add or subtract `3500 × DD / 7` kcal/day, with DD in lb/week. kg rates are converted
   to lb first (`features/tdee/lib/goals.ts`).
+- **Intensity levels**: the wording shown under the picker and in the Reference guide lives in
+  `INTENSITY_LEVELS` in `features/tdee/lib/constants.ts`.
+- **Macros**: three splits (Standard, High protein, High carb) at 4/4/9 kcal per gram, built from
+  maintenance or any bulk/cut target (`features/tdee/lib/macros.ts`).
+- **Coaching CTA**: the consultation link, coach name, and team records are in
+  `src/config/coaching.ts`.
 - **View the calculations** shows every step with the user's numbers filled in. It's built from
   the same result object the calculator uses (`features/tdee/lib/formulas.ts`), so the panel
   can't drift from the real math.

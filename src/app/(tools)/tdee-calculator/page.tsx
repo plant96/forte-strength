@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import Image from "next/image"
 
+import { CoachingCta } from "@/components/marketing/coaching-cta"
 import { TdeeCalculator } from "@/features/tdee/components/tdee-calculator"
 
 const description =
@@ -39,6 +40,10 @@ export default function TdeeCalculatorPage() {
       </header>
 
       <TdeeCalculator />
+
+      <div className="mt-16 sm:mt-20">
+        <CoachingCta />
+      </div>
     </div>
   )
 }

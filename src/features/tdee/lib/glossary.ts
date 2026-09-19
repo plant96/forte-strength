@@ -175,6 +175,38 @@ export const GLOSSARY = {
     meaning:
       "Calories added (bulk) or removed (cut) each day, using 3,500 kcal per lb of body mass.",
   },
+  E: {
+    tex: "E",
+    text: "E",
+    name: "Calorie target",
+    unit: "kcal/day",
+    range: "—",
+    meaning: "The daily calories the macros are built from: maintenance, or a bulk/cut target.",
+  },
+  s: {
+    tex: "s",
+    text: "s",
+    name: "Macro share",
+    unit: "—",
+    range: "0–1",
+    meaning: "A macro's share of total calories, e.g. 27.5% = 0.275.",
+  },
+  k: {
+    tex: "k",
+    text: "k",
+    name: "Energy per gram",
+    unit: "kcal/g",
+    range: "4 or 9",
+    meaning: "4 kcal per gram for protein and carbs, 9 kcal per gram for fat.",
+  },
+  g: {
+    tex: "g",
+    text: "g",
+    name: "Grams per day",
+    unit: "g",
+    range: "—",
+    meaning: "How many grams of that macro to eat each day.",
+  },
 } as const satisfies Record<string, GlossaryEntry>
 
 export type SymbolId = keyof typeof GLOSSARY

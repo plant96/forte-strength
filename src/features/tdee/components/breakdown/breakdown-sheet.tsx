@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/sheet"
 import type { WeightUnit } from "@/lib/units"
 
+import type { CalorieTarget } from "../../lib/macros"
 import type { TdeeResult } from "../../lib/tdee"
 import type { TdeeFormValues } from "../../schema"
 
@@ -29,9 +30,10 @@ interface BreakdownSheetProps {
   values: TdeeFormValues
   result: TdeeResult
   goalUnit: WeightUnit
+  calorieTarget: CalorieTarget
 }
 
-export function BreakdownSheet({ values, result, goalUnit }: BreakdownSheetProps) {
+export function BreakdownSheet({ values, result, goalUnit, calorieTarget }: BreakdownSheetProps) {
   const preload = () => void loadBreakdownContent()
 
   return (
@@ -60,7 +62,12 @@ export function BreakdownSheet({ values, result, goalUnit }: BreakdownSheetProps
           </SheetDescription>
         </SheetHeader>
         <div id="breakdown-scroll" className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-          <BreakdownContent values={values} result={result} goalUnit={goalUnit} />
+          <BreakdownContent
+            values={values}
+            result={result}
+            goalUnit={goalUnit}
+            calorieTarget={calorieTarget}
+          />
         </div>
       </SheetContent>
     </Sheet>

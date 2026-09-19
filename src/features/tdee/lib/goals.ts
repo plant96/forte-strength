@@ -54,3 +54,12 @@ export function calculateGoalTargets(tdee: number, bmr: number, unit: WeightUnit
 
   return { bulk: build("bulk"), cut: build("cut") }
 }
+
+const MINUS = "−"
+
+/** Signed weekly rate for display, e.g. "−0.5 lb/week" or "+1 kg/week". */
+export function formatRate(target: GoalTarget) {
+  const sign = target.direction === "bulk" ? "+" : MINUS
+  const rate = target.rate.toLocaleString("en-US", { maximumFractionDigits: 2 })
+  return `${sign}${rate} ${target.unit}/week`
+}

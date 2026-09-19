@@ -97,5 +97,68 @@ describe("TdeeCalculator", () => {
       expect(within(panel).getAllByText(value).length).toBeGreaterThan(0)
     }
     expect(within(panel).getByRole("heading", { name: "Variables" })).toBeInTheDocument()
+    expect(within(panel).getByRole("heading", { name: "Macronutrients" })).toBeInTheDocument()
+  })
+
+  it("notes that TEF isn't included and explains it on request", async () => {
+    const user = renderCalculator()
+    await fillReferenceInputs(user)
+    await user.click(screen.getByRole("button", { name: /calculate tdee/i }))
+    await screen.findByText("Estimated TDEE: 2,843 calories per day.")
+
+    expect(screen.getByText(/^Doesn't include the thermic effect of food/)).toBeInTheDocument()
+
+    await user.click(screen.getByRole("button", { name: "What is TEF?" }))
+    const dialog = await screen.findByRole("dialog", { name: "What is TEF?" })
+    expect(within(dialog).getByText(/digesting, absorbing and processing/)).toBeInTheDocument()
+    expect(within(dialog).getByText(/differs from athlete to athlete/)).toBeInTheDocument()
+    expect(within(dialog).getByText("20–30% of its calories")).toBeInTheDocument()
+    // No single fixed TEF percentage anywhere in the explanation.
+    expect(dialog).not.toHaveTextContent(/about 10%|roughly 10%/i)
+    expect(within(dialog).getByText("Non-exercise activity thermogenesis")).toBeInTheDocument()
+    expect(within(dialog).getByText("Exercise activity thermogenesis")).toBeInTheDocument()
+  })
+
+  it("describes the chosen intensity and highlights it in the reference", async () => {
+    const user = renderCalculator()
+    await fillReferenceInputs(user)
+
+    expect(
+      screen.getByText("Resistance training with free weights, or Zone 3 cardio."),
+    ).toBeInTheDocument()
+
+    await user.click(screen.getByRole("button", { name: "Reference" }))
+    const guide = await screen.findByRole("dialog", { name: "Training intensity guide" })
+    expect(within(guide).getByText("HYROX")).toBeInTheDocument()
+    // The step-overlap note sits with the general notes at the bottom, not in the Very light card.
+    expect(within(guide).getByText(/corrects for the overlap/)).toBeInTheDocument()
+    const veryLight = within(guide).getByRole("heading", { name: "Very light" }).closest("li")
+    expect(veryLight).not.toHaveTextContent(/corrects for the overlap/)
+    const selected = within(guide).getByText("Your selection").closest("li")
+    expect(selected).toHaveTextContent("Moderate")
+  })
+
+  it("shows three macro splits and rebuilds them from the chosen calorie target", async () => {
+    const user = renderCalculator()
+    await fillReferenceInputs(user)
+    await user.click(screen.getByRole("button", { name: /calculate tdee/i }))
+    await screen.findByText("Estimated TDEE: 2,843 calories per day.")
+
+    const macros = screen.getByRole("region", { name: /your macros/i })
+    for (const name of ["Standard", "High protein", "High carb"]) {
+      expect(within(macros).getByRole("article", { name })).toBeInTheDocument()
+    }
+    const highCarb = within(macros).getByRole("article", { name: "High carb" })
+    expect(within(highCarb).getByText("Coach Ty's favorite")).toBeInTheDocument()
+
+    // Standard protein at maintenance: 2,842.7 × 27.5% ÷ 4 ≈ 195 g
+    const standard = within(macros).getByRole("article", { name: "Standard" })
+    expect(within(standard).getByText("195", { selector: ".sr-only" })).toBeInTheDocument()
+
+    await user.click(screen.getByLabelText("Calorie target"))
+    await user.click(await screen.findByRole("option", { name: "Cut −0.5 lb/week · 2,593 kcal" }))
+
+    // 2,592.7 × 27.5% ÷ 4 ≈ 178 g
+    expect(within(standard).getByText("178", { selector: ".sr-only" })).toBeInTheDocument()
   })
 })

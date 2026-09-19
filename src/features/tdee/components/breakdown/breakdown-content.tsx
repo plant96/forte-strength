@@ -16,6 +16,8 @@ import {
   type BreakdownInputRow,
 } from "../../lib/formulas"
 import { GLOSSARY } from "../../lib/glossary"
+import type { CalorieTarget } from "../../lib/macros"
+import { TEF_NOTE } from "../../lib/tef"
 import type { TdeeResult } from "../../lib/tdee"
 import type { TdeeFormValues } from "../../schema"
 import { FormulaStepCard } from "./formula-step"
@@ -27,6 +29,7 @@ const NAV_ITEMS = [
   { id: "activity", label: "Activity" },
   { id: "tdee", label: "TDEE" },
   { id: "targets", label: "Targets" },
+  { id: "macros", label: "Macros" },
   { id: "variables", label: "Variables" },
   { id: "sources", label: "Sources" },
 ] as const
@@ -35,10 +38,16 @@ interface BreakdownContentProps {
   values: TdeeFormValues
   result: TdeeResult
   goalUnit: WeightUnit
+  calorieTarget: CalorieTarget
 }
 
-export function BreakdownContent({ values, result, goalUnit }: BreakdownContentProps) {
-  const breakdown = buildBreakdown(values, result, goalUnit)
+export function BreakdownContent({
+  values,
+  result,
+  goalUnit,
+  calorieTarget,
+}: BreakdownContentProps) {
+  const breakdown = buildBreakdown(values, result, goalUnit, calorieTarget)
 
   return (
     <div className="flex flex-col">
@@ -109,6 +118,9 @@ export function BreakdownContent({ values, result, goalUnit }: BreakdownContentP
               </li>
             ))}
           </ol>
+          <p className="rounded-lg bg-muted/40 px-4 py-3 text-xs text-muted-foreground">
+            {TEF_NOTE}
+          </p>
           <p className="rounded-lg bg-muted/40 px-4 py-3 text-xs text-muted-foreground">
             Values are rounded for display, but every step runs at full precision. Re-doing the math
             by hand with the rounded numbers can differ in the last digit.
