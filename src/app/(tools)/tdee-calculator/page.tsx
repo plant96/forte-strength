@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import Image from "next/image"
 
 import { CoachingCta } from "@/components/marketing/coaching-cta"
+import { getCalculatorAutofill } from "@/features/profile/queries"
 import { TdeeCalculator } from "@/features/tdee/components/tdee-calculator"
 
 const description =
@@ -18,7 +19,9 @@ export const metadata: Metadata = {
   },
 }
 
-export default function TdeeCalculatorPage() {
+export default async function TdeeCalculatorPage() {
+  const initialValues = await getCalculatorAutofill()
+
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
       <header className="mb-10 flex flex-col items-center gap-6 text-center sm:mb-12">
@@ -39,7 +42,7 @@ export default function TdeeCalculatorPage() {
         </div>
       </header>
 
-      <TdeeCalculator />
+      <TdeeCalculator initialValues={initialValues} />
 
       <div className="mt-16 sm:mt-20">
         <CoachingCta />

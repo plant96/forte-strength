@@ -7,6 +7,25 @@ afterEach(() => {
   cleanup()
 })
 
+// Components render outside the App Router in tests. One stable router object,
+// so effects that depend on it don't re-run on every render.
+vi.mock("next/navigation", async (importOriginal) => {
+  const router = {
+    push: vi.fn(),
+    replace: vi.fn(),
+    refresh: vi.fn(),
+    back: vi.fn(),
+    forward: vi.fn(),
+    prefetch: vi.fn(),
+  }
+  return {
+    ...(await importOriginal<typeof import("next/navigation")>()),
+    useRouter: () => router,
+    usePathname: () => "/",
+    useSearchParams: () => new URLSearchParams(),
+  }
+})
+
 // jsdom gaps that Radix UI and Motion rely on.
 Object.defineProperty(window, "matchMedia", {
   writable: true,

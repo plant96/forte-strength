@@ -1,11 +1,18 @@
-import { ArrowUpRightIcon, MapPinIcon } from "lucide-react"
+import { ArrowRightIcon, MapPinIcon } from "lucide-react"
+import Link from "next/link"
 
 import { TMark } from "@/components/brand/t-mark"
 import { Button } from "@/components/ui/button"
-import { coaching } from "@/config/coaching"
+import { coachReachSentence, coachRecords, type CoachProfileData } from "@/config/coaching"
+import { siteConfig } from "@/config/site"
+import { getCoachProfile } from "@/features/coach/queries"
 
-/** Invitation to book a coaching consultation with the head coach. */
-export function CoachingCta() {
+/** Invitation to apply for coaching, with the head coach's live records. */
+export async function CoachingCta() {
+  return <CoachingCtaView profile={await getCoachProfile()} />
+}
+
+export function CoachingCtaView({ profile }: { profile: CoachProfileData }) {
   return (
     <section
       aria-labelledby="coaching-heading"
@@ -29,12 +36,12 @@ export function CoachingCta() {
             Turn your numbers into a plan
           </h2>
           <p className="text-base text-pretty text-foreground/85">
-            Your TDEE is the starting point. Work one-on-one with Head Coach {coaching.headCoach} to
+            Your TDEE is the starting point. Work one-on-one with {profile.title} {profile.name} to
             build your training and nutrition around your goals.
           </p>
           <p className="text-sm text-pretty text-muted-foreground">
-            Tyler is a competitive powerlifter and certified personal trainer with 4+ years of
-            coaching and competition experience.
+            {profile.credentials} · {profile.yearsExperience}+ years of coaching and competition
+            experience.
           </p>
           <div className="pt-1">
             <Button
@@ -42,11 +49,10 @@ export function CoachingCta() {
               size="lg"
               className="h-12 w-full px-6 font-heading text-base font-semibold tracking-wider uppercase sm:w-auto"
             >
-              <a href={coaching.consultationUrl} target="_blank" rel="noopener noreferrer">
-                Request a consultation
-                <span className="sr-only"> (opens in a new tab)</span>
-                <ArrowUpRightIcon />
-              </a>
+              <Link href={siteConfig.cta.href}>
+                Apply for coaching
+                <ArrowRightIcon />
+              </Link>
             </Button>
           </div>
         </div>
@@ -56,7 +62,7 @@ export function CoachingCta() {
             An elite powerlifting team
           </p>
           <dl className="grid grid-cols-3 gap-2 sm:gap-3">
-            {coaching.records.map((record) => (
+            {coachRecords(profile).map((record) => (
               <div
                 key={record.label}
                 className="flex flex-col items-center gap-1.5 rounded-xl bg-background/60 px-2 py-4 text-center ring-1 ring-foreground/10"
@@ -73,9 +79,7 @@ export function CoachingCta() {
           </dl>
           <p className="flex items-start gap-1.5 text-xs text-muted-foreground">
             <MapPinIcon className="mt-px size-3.5 shrink-0 text-highlight" aria-hidden="true" />
-            <span>
-              Based in {coaching.homeBase}, with lifters across {coaching.reach.join(", ")}.
-            </span>
+            <span>{coachReachSentence(profile)}</span>
           </p>
         </div>
       </div>

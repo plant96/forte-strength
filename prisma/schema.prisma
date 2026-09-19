@@ -1,0 +1,180 @@
+// Forte Strength Systems data model.
+// Connection URLs live in prisma.config.ts (CLI) and src/server/db.ts (app).
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------------
+// Website accounts (not coaching clients)
+// ---------------------------------------------------------------------------
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum Sex {
+  MALE
+  FEMALE
+}
+
+enum WeightUnit {
+  LB
+  KG
+}
+
+enum HeightUnit {
+  FT_IN
+  CM
+}
+
+enum Intensity {
+  VERY_LIGHT
+  LIGHT
+  MODERATE
+  HARD
+  VERY_HARD
+}
+
+/// A website account, created from Clerk the first time the person is seen.
+/// Set `role` to ADMIN (e.g. in Prisma Studio) to unlock the admin panel.
+model User {
+  id                  String    @id @default(cuid())
+  clerkId             String    @unique
+  email               String
+  firstName           String?
+  lastName            String?
+  imageUrl            String?
+  role                Role      @default(USER)
+  onboardedAt         DateTime?
+  onboardingSkippedAt DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  profile             Profile?
+
+  @@index([email])
+  @@index([createdAt])
+}
+
+/// Body and activity stats used to autofill the tools.
+/// Weight and height keep the user's preferred units so autofill shows what they entered.
+model Profile {
+  userId          String     @id
+  user            User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  birthDate       DateTime   @db.Date
+  sex             Sex
+  weight          Float
+  weightUnit      WeightUnit
+  heightCm        Float
+  heightUnit      HeightUnit
+  bodyFatPercent  Float
+  stepsPerDay     Int
+  sessionsPerWeek Int
+  /// Null when the user trains 0 sessions a week.
+  intensity       Intensity?
+  updatedAt       DateTime   @updatedAt
+}
+
+// ---------------------------------------------------------------------------
+// Coaching applications (separate from website accounts)
+// ---------------------------------------------------------------------------
+
+enum ApplicationStatus {
+  UNPROCESSED
+  PROCESSED
+}
+
+enum CoachingNeed {
+  COMPETITIVE_POWERLIFTING
+  RECREATIONAL_POWERLIFTING
+  WEIGHT_LOSS_RECOMP
+  OTHER
+}
+
+enum CurrentCoach {
+  YES_LOOKING_FOR_BETTER
+  NO_BUT_HAVE_BEFORE
+  NO_NEVER
+}
+
+enum FinancePriority {
+  MOST_COST_EFFECTIVE
+  SOLID_AFFORDABLE
+  PREMIUM
+}
+
+enum Readiness {
+  READY_NOW
+  NEED_TO_PREPARE
+  NOT_SURE
+}
+
+model Application {
+  id          String            @id @default(cuid())
+  status      ApplicationStatus @default(UNPROCESSED)
+  processedAt DateTime?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  // About you
+  fullName  String
+  age       Int
+  email     String
+  phone     String
+  location  String
+  instagram String
+
+  // Your lifting
+  primaryNeed         CoachingNeed
+  primaryNeedOther    String?
+  squat               Float
+  bench               Float
+  deadlift            Float
+  liftUnit            WeightUnit
+  liftsAreCompetition Boolean
+  weightClass         String
+
+  // Your story
+  goals                 String @db.Text
+  challenges            String @db.Text
+  overthinker           Int
+  injuries              String @db.Text
+  nutritionRestrictions String @db.Text
+  programming           String @db.Text
+
+  // Commitment
+  currentCoach    CurrentCoach
+  whyForte        String          @db.Text
+  commitment      String
+  financePriority FinancePriority
+  readiness       Readiness
+
+  @@index([status, createdAt])
+  @@index([createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// Coach profile (editable in the admin panel, shown site-wide)
+// ---------------------------------------------------------------------------
+
+/// Singleton row (id = "coach").
+model CoachProfile {
+  id              String   @id @default("coach")
+  name            String
+  title           String
+  credentials     String
+  yearsExperience Int
+  bio             String   @db.Text
+  worldRecords    Int
+  americanRecords Int
+  stateRecords    Int
+  homeBase        String
+  reach           String[]
+  updatedAt       DateTime @updatedAt
+}

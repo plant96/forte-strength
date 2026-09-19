@@ -1,9 +1,13 @@
 import { render, screen, within } from "@testing-library/react"
 import userEvent, { type UserEvent } from "@testing-library/user-event"
-import { describe, expect, it } from "vitest"
+import { useRouter } from "next/navigation"
+import { toast } from "sonner"
+import { afterEach, describe, expect, it } from "vitest"
 
 import { MotionProvider } from "@/components/motion/motion-provider"
+import { Toaster } from "@/components/ui/sonner"
 
+import { TDEE_FORM_DEFAULTS, type TdeeFormInput } from "../schema"
 import { TdeeCalculator } from "./tdee-calculator"
 
 function renderCalculator() {
@@ -135,12 +139,44 @@ describe("TdeeCalculator", () => {
     await user.click(screen.getByRole("button", { name: "Reference" }))
     const guide = await screen.findByRole("dialog", { name: "Training intensity guide" })
     expect(within(guide).getByText("HYROX")).toBeInTheDocument()
-    // The step-overlap note sits with the general notes at the bottom, not in the Very light card.
-    expect(within(guide).getByText(/corrects for the overlap/)).toBeInTheDocument()
-    const veryLight = within(guide).getByRole("heading", { name: "Very light" }).closest("li")
-    expect(veryLight).not.toHaveTextContent(/corrects for the overlap/)
+    // The step-overlap note lives under the picker only, so the guide doesn't repeat it.
+    expect(guide).not.toHaveTextContent(/corrects for the overlap/)
+    expect(within(guide).getByText(/Heart-rate zones/)).toBeInTheDocument()
     const selected = within(guide).getByText("Your selection").closest("li")
     expect(selected).toHaveTextContent("Moderate")
+  })
+
+  it("selects an intensity from the reference and closes it", async () => {
+    const user = renderCalculator()
+    await user.type(screen.getByLabelText("Training sessions per week"), "4")
+
+    await user.click(screen.getByRole("button", { name: "Reference" }))
+    const guide = await screen.findByRole("dialog", { name: "Training intensity guide" })
+    await user.click(within(guide).getByRole("button", { name: /very hard/i }))
+
+    expect(
+      screen.queryByRole("dialog", { name: "Training intensity guide" }),
+    ).not.toBeInTheDocument()
+    expect(screen.getByLabelText("Training intensity")).toHaveTextContent("Very hard")
+    expect(screen.getByText(/^Sprint training, HYROX/)).toBeInTheDocument()
+
+    // Reopening shows the new choice as the selection.
+    await user.click(screen.getByRole("button", { name: "Reference" }))
+    const reopened = await screen.findByRole("dialog", { name: "Training intensity guide" })
+    expect(within(reopened).getByRole("button", { name: /very hard/i })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    )
+  })
+
+  it("locks the reference levels when training 0 sessions", async () => {
+    const user = renderCalculator()
+    await user.type(screen.getByLabelText("Training sessions per week"), "0")
+
+    await user.click(screen.getByRole("button", { name: "Reference" }))
+    const guide = await screen.findByRole("dialog", { name: "Training intensity guide" })
+    expect(within(guide).getByText(/Add sessions to pick a level/)).toBeInTheDocument()
+    expect(within(guide).getByRole("button", { name: /moderate/i })).toBeDisabled()
   })
 
   it("shows three macro splits and rebuilds them from the chosen calorie target", async () => {
@@ -165,5 +201,85 @@ describe("TdeeCalculator", () => {
 
     // 2,592.7 × 27.5% ÷ 4 ≈ 178 g
     expect(within(standard).getByText("178", { selector: ".sr-only" })).toBeInTheDocument()
+  })
+})
+
+describe("TdeeCalculator with a saved profile", () => {
+  // Toasts live in a module-level store that outlasts each render.
+  afterEach(() => {
+    toast.dismiss()
+  })
+
+  const PROFILE: TdeeFormInput = {
+    ...TDEE_FORM_DEFAULTS,
+    weight: "180",
+    heightFt: "5",
+    heightIn: "10",
+    age: "30",
+    sex: "male",
+    bodyFat: "15",
+    steps: "8000",
+    sessions: "4",
+    intensity: "moderate",
+  }
+
+  function renderWithToaster(initialValues?: TdeeFormInput) {
+    const user = userEvent.setup()
+    render(
+      <MotionProvider>
+        <TdeeCalculator initialValues={initialValues} />
+        <Toaster />
+      </MotionProvider>,
+    )
+    return user
+  }
+
+  it("fills the form from the profile and says so", async () => {
+    const user = renderWithToaster(PROFILE)
+
+    expect(screen.getByLabelText("Bodyweight")).toHaveValue("180")
+    expect(screen.getByLabelText("Age")).toHaveValue("30")
+    expect(screen.getByLabelText("Training intensity")).toHaveTextContent("Moderate")
+
+    expect(
+      await screen.findByText("Information was autofilled from your profile"),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText("You can change anything here, or update it anytime in settings."),
+    ).toBeInTheDocument()
+
+    await user.click(screen.getByRole("button", { name: "Calculate TDEE" }))
+    expect(await screen.findByText("Estimated TDEE: 2,843 calories per day.")).toBeInTheDocument()
+  })
+
+  it("keeps autofilled values editable", async () => {
+    const user = renderWithToaster(PROFILE)
+    const weight = screen.getByLabelText("Bodyweight")
+
+    await user.clear(weight)
+    await user.type(weight, "200")
+    await user.click(screen.getByRole("button", { name: "Calculate TDEE" }))
+
+    expect(weight).toHaveValue("200")
+    expect(
+      await screen.findByText(/^Estimated TDEE: [\d,]+ calories per day\.$/),
+    ).not.toHaveTextContent("2,843")
+  })
+
+  it("links the notification to settings", async () => {
+    const user = renderWithToaster(PROFILE)
+    const settings = await screen.findByRole("button", { name: "Settings" })
+    // Sonner hands focus back to the previously focused element on dismiss.
+    screen.getByLabelText("Bodyweight").focus()
+    await user.click(settings)
+    expect(useRouter().push).toHaveBeenCalledWith("/profile")
+  })
+
+  it("doesn't mention autofill for signed-out visitors", async () => {
+    renderWithToaster()
+    await screen.findByRole("button", { name: "Calculate TDEE" })
+    expect(
+      screen.queryByText("Information was autofilled from your profile"),
+    ).not.toBeInTheDocument()
   })
 })

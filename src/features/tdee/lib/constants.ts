@@ -28,9 +28,9 @@ export interface IntensityLevel<Id extends IntensityId = IntensityId> {
   examples: readonly string[]
 }
 
-/** Shown under the intensity picker and in the intensity guide. */
+/** Shown under the intensity picker. */
 export const STEP_OVERLAP_NOTE =
-  "Already counting those walks in your daily steps? That's fine. The activity multiplier corrects for the overlap."
+  "Do some of your workouts add to your step count, like walks, runs or conditioning? That's fine. Count them in both your steps and your sessions. The activity multiplier corrects for the overlap."
 
 /** Training intensity levels, from none to very hard. */
 export const INTENSITY_LEVELS: readonly IntensityLevel[] = [

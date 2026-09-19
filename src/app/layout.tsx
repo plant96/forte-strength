@@ -1,12 +1,16 @@
 import "./globals.css"
 
+import { ClerkProvider } from "@clerk/nextjs"
+import { shadcn } from "@clerk/themes"
 import { cn } from "cn"
 import type { Metadata, Viewport } from "next"
 import { Geist, Geist_Mono, Saira_Condensed } from "next/font/google"
 
+import { OnboardingBanner } from "@/components/layout/onboarding-banner"
 import { SiteFooter } from "@/components/layout/site-footer"
 import { SiteHeader } from "@/components/layout/site-header"
 import { MotionProvider } from "@/components/motion/motion-provider"
+import { Toaster } from "@/components/ui/sonner"
 import { siteConfig } from "@/config/site"
 
 const geistSans = Geist({
@@ -48,22 +52,36 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html
-      lang="en"
-      className={cn(
-        "dark h-full antialiased",
-        geistSans.variable,
-        geistMono.variable,
-        sairaCondensed.variable,
-      )}
+    <ClerkProvider
+      appearance={{
+        theme: shadcn,
+        variables: { fontFamily: "var(--font-geist-sans)", borderRadius: "0.75rem" },
+      }}
+      signInUrl="/sign-in"
+      signUpUrl="/sign-up"
+      signInFallbackRedirectUrl="/"
+      signUpFallbackRedirectUrl="/onboarding"
+      afterSignOutUrl="/"
     >
-      <body className="flex min-h-full flex-col">
-        <MotionProvider>
-          <SiteHeader />
-          <main className="flex-1">{children}</main>
-          <SiteFooter />
-        </MotionProvider>
-      </body>
-    </html>
+      <html
+        lang="en"
+        className={cn(
+          "dark h-full antialiased",
+          geistSans.variable,
+          geistMono.variable,
+          sairaCondensed.variable,
+        )}
+      >
+        <body className="flex min-h-full flex-col">
+          <MotionProvider>
+            <SiteHeader />
+            <OnboardingBanner />
+            <main className="flex-1">{children}</main>
+            <SiteFooter />
+          </MotionProvider>
+          <Toaster position="bottom-right" />
+        </body>
+      </html>
+    </ClerkProvider>
   )
 }

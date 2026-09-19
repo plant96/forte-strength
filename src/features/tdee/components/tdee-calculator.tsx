@@ -1,8 +1,10 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
+import { useRouter } from "next/navigation"
 import { useEffect, useRef, useState } from "react"
 import { useForm } from "react-hook-form"
+import { toast } from "sonner"
 
 import type { WeightUnit } from "@/lib/units"
 
@@ -21,12 +23,31 @@ import { ResultsEmptyState } from "./results/results-empty-state"
 import { ResultsPanel } from "./results/results-panel"
 import { TdeeForm } from "./tdee-form"
 
-export function TdeeCalculator() {
+interface TdeeCalculatorProps {
+  /** Values from the signed-in user's profile. Every field stays editable. */
+  initialValues?: TdeeFormInput
+}
+
+export function TdeeCalculator({ initialValues }: TdeeCalculatorProps) {
+  const router = useRouter()
   const form = useForm<TdeeFormInput, unknown, TdeeFormValues>({
     resolver: zodResolver(tdeeFormSchema),
-    defaultValues: TDEE_FORM_DEFAULTS,
+    defaultValues: initialValues ?? TDEE_FORM_DEFAULTS,
     mode: "onTouched",
   })
+  const autofilled = initialValues !== undefined
+
+  // Let people know where the numbers came from, and where to change them for good.
+  useEffect(() => {
+    if (!autofilled) return
+    toast("Information was autofilled from your profile", {
+      id: "profile-autofill",
+      description: "You can change anything here, or update it anytime in settings.",
+      duration: 7000,
+      action: { label: "Settings", onClick: () => router.push("/profile") },
+    })
+  }, [autofilled, router])
+
   /** The last valid set of inputs. Null until the first calculation. */
   const [values, setValues] = useState<TdeeFormValues | null>(null)
   const [goalUnit, setGoalUnit] = useState<WeightUnit>("lb")
