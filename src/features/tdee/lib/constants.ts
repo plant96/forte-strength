@@ -26,10 +26,9 @@ export interface IntensityLevel<Id extends IntensityId = IntensityId> {
   description: string
   /** Typical sessions at this level, shown in the intensity reference. */
   examples: readonly string[]
-  note?: string
 }
 
-/** Shown with the very light level and in the intensity guide. */
+/** Shown under the intensity picker and in the intensity guide. */
 export const STEP_OVERLAP_NOTE =
   "Already counting those walks in your daily steps? That's fine. The activity multiplier corrects for the overlap."
 
@@ -48,7 +47,6 @@ export const INTENSITY_LEVELS: readonly IntensityLevel[] = [
     score: 0.2,
     description: "Walking or light jogging.",
     examples: ["Walking", "Light jogging"],
-    note: STEP_OVERLAP_NOTE,
   },
   {
     id: "light",

@@ -121,7 +121,12 @@ describe("TdeeCalculator", () => {
 
   it("describes the chosen intensity and highlights it in the reference", async () => {
     const user = renderCalculator()
+
+    // The step-overlap note shows under the intensity picker before anything is chosen.
+    expect(screen.getByText(/corrects for the overlap/)).toBeInTheDocument()
+
     await fillReferenceInputs(user)
+    expect(screen.getByText(/corrects for the overlap/)).toBeInTheDocument()
 
     expect(
       screen.getByText("Resistance training with free weights, or Zone 3 cardio."),

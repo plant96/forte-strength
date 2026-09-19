@@ -1,6 +1,6 @@
 "use client"
 
-import { CalculatorIcon, MinusIcon, PlusIcon } from "lucide-react"
+import { CalculatorIcon, InfoIcon, MinusIcon, PlusIcon } from "lucide-react"
 import { Controller, useFormState, useWatch, type UseFormReturn } from "react-hook-form"
 
 import { Button } from "@/components/ui/button"
@@ -44,6 +44,7 @@ import {
   INPUT_LIMITS,
   SELECTABLE_INTENSITY_LEVELS,
   SEX_OPTIONS,
+  STEP_OVERLAP_NOTE,
   type Sex,
   type TrainingIntensityId,
 } from "../lib/constants"
@@ -365,15 +366,20 @@ export function TdeeForm({ form, onCalculate, hasCalculated }: TdeeFormProps) {
                             {selectedIntensity.label}:
                           </span>{" "}
                           {selectedIntensity.description}
-                          {selectedIntensity.note && (
-                            <span className="mt-1 block text-xs">{selectedIntensity.note}</span>
-                          )}
                         </>
                       ) : (
                         "How hard a typical session feels. Not sure? Open the reference."
                       )}
                     </FieldDescription>
                     <FieldError errors={[fieldState.error]} />
+                    {/* Applies whatever level is picked, so it's always visible. */}
+                    <p className="flex items-start gap-2 rounded-lg bg-muted/30 px-3 py-2 text-xs leading-relaxed text-muted-foreground ring-1 ring-foreground/5">
+                      <InfoIcon
+                        className="mt-0.5 size-3.5 shrink-0 text-highlight"
+                        aria-hidden="true"
+                      />
+                      {STEP_OVERLAP_NOTE}
+                    </p>
                   </Field>
                 )}
               />
