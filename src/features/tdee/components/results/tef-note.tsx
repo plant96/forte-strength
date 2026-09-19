@@ -83,7 +83,7 @@ function TefDialog() {
           What is TEF?
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-[92dvh] gap-5 overflow-y-auto p-4 sm:max-w-lg sm:p-6">
+      <DialogContent className="max-h-[96dvh] gap-5 overflow-y-auto p-4 sm:max-w-xl sm:p-6">
         <DialogHeader className="pr-8">
           <DialogTitle className="font-heading text-xl font-bold tracking-wide uppercase">
             What is TEF?
