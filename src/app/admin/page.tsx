@@ -1,5 +1,6 @@
 import {
   ArrowRightIcon,
+  HandshakeIcon,
   InboxIcon,
   SparklesIcon,
   UserCheckIcon,
@@ -29,7 +30,7 @@ export default async function AdminOverviewPage() {
         description="Coaching applications and website activity at a glance."
       />
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
         <StatTile
           label="New applications"
           value={counts.unprocessed}
@@ -57,6 +58,13 @@ export default async function AdminOverviewPage() {
           value={counts.onboarded}
           icon={UserCheckIcon}
           hint={`${onboardedShare}% of users`}
+        />
+        <StatTile
+          label="Clients"
+          value={counts.clients}
+          icon={HandshakeIcon}
+          hint="Users marked as coaching clients"
+          href="/admin/clients"
         />
       </div>
 

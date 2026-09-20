@@ -1,5 +1,5 @@
-/** Icons available to nav entries (mapped to components in the nav UI). */
-export type NavIcon = "calculator" | "squat" | "bench" | "deadlift"
+/** Icons available to nav entries and the vault's lift switcher (mapped to components in the nav UI). */
+export type NavIcon = "calculator" | "vault" | "squat" | "bench" | "deadlift"
 
 export interface NavLink {
   title: string
@@ -29,25 +29,19 @@ export const tools: NavLink[] = [
   },
 ]
 
-/** Mobility and warm-up vaults. Add new ones here and they appear in the nav and the sitemap. */
+/**
+ * The mobility vault's base path. Each lift is a page below it (`features/resources/data.ts`),
+ * and this path itself redirects to the first lift (`next.config.ts`).
+ */
+export const MOBILITY_VAULT_PATH = "/resources/mobility-vault"
+
+/** Resources. Add new ones here and they appear in the nav's Resources menu and the sitemap. */
 export const resources: NavLink[] = [
   {
-    title: "Squat",
-    href: "/resources/squat",
-    description: "Hip, ankle and T-spine mobility, then glute and abductor activation.",
-    icon: "squat",
-  },
-  {
-    title: "Bench",
-    href: "/resources/bench",
-    description: "Chest and lat mobility for a stronger arch, plus rotator cuff work.",
-    icon: "bench",
-  },
-  {
-    title: "Deadlift",
-    href: "/resources/deadlift",
-    description: "Stance-specific hip work and posterior chain activation.",
-    icon: "deadlift",
+    title: "Mobility Vault",
+    href: MOBILITY_VAULT_PATH,
+    description: "Mobility, flexibility and warm-up drills for squat, bench and deadlift.",
+    icon: "vault",
   },
 ]
 

@@ -1,5 +1,15 @@
-import { CheckIcon, ShieldCheckIcon } from "lucide-react"
+import { CheckIcon, HandshakeIcon, ShieldCheckIcon } from "lucide-react"
 import Image from "next/image"
+
+/** A website user the coach has marked as a coaching client. */
+export function ClientBadge() {
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full bg-primary/15 px-2 py-0.5 text-xs font-medium whitespace-nowrap text-highlight ring-1 ring-primary/30">
+      <HandshakeIcon className="size-3" aria-hidden="true" />
+      Client
+    </span>
+  )
+}
 
 export function OnboardingBadge({
   onboardedAt,

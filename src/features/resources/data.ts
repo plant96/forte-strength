@@ -5,6 +5,8 @@
  * were not touched.
  */
 
+import { MOBILITY_VAULT_PATH } from "@/config/site"
+
 export const LIFT_SLUGS = ["squat", "bench", "deadlift"] as const
 
 export type LiftSlug = (typeof LIFT_SLUGS)[number]
@@ -39,8 +41,11 @@ export interface ResourceLift {
   blocks: ResourceBlock[]
 }
 
-export const VAULT_INTRO = {
-  eyebrow: "Resource vault",
+export const VAULT = {
+  eyebrow: "Mobility · flexibility · warm-up",
+  title: "Mobility Vault",
+  description:
+    "Everything we use to get the squat, bench and deadlift moving well before the bar gets heavy. Pick a lift to get started.",
   lines: [
     "These are links and examples handpicked by our coaching staff. Every demonstration has been tested by us and by our current athletes.",
     "If you have a recommendation, or you don't see a solution to something you're struggling with, DM us personally and we'll sort it out that way.",
@@ -61,7 +66,7 @@ export const resourceLifts: ResourceLift[] = [
     title: "Squat",
     heading: "All things squat",
     description:
-      "Hip, ankle and thoracic work to get you into position, then glute and abductor activation so the first rep feels like the fifth.",
+      "Hip, ankle and thoracic work to get you into position, then glute and abductor activation.",
     blocks: [
       {
         title: MOBILIZATION,
@@ -350,4 +355,9 @@ export const resourceLifts: ResourceLift[] = [
 
 export function getResourceLift(slug: string) {
   return resourceLifts.find((lift) => lift.slug === slug)
+}
+
+/** Where a lift's page lives: one segment below the vault's nav entry. */
+export function liftHref(slug: LiftSlug) {
+  return `${MOBILITY_VAULT_PATH}/${slug}`
 }

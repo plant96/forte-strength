@@ -3,6 +3,7 @@
 import { cn } from "cn"
 import {
   ChartNoAxesCombinedIcon,
+  HandshakeIcon,
   InboxIcon,
   LayoutDashboardIcon,
   MedalIcon,
@@ -17,6 +18,7 @@ const ITEMS: { href: string; label: string; icon: LucideIcon; exact?: boolean }[
   { href: "/admin/analytics", label: "Analytics", icon: ChartNoAxesCombinedIcon },
   { href: "/admin/applications", label: "Applications", icon: InboxIcon },
   { href: "/admin/users", label: "Website users", icon: UsersRoundIcon },
+  { href: "/admin/clients", label: "Clients", icon: HandshakeIcon },
   { href: "/admin/coach", label: "Coach profile", icon: MedalIcon },
 ]
 

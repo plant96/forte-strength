@@ -1,17 +1,23 @@
-import { SearchXIcon, UsersRoundIcon } from "lucide-react"
+import { HandshakeIcon, SearchXIcon } from "lucide-react"
 import type { Metadata } from "next"
 
 import { AdminHeader, EmptyState, Pagination } from "@/features/admin/components/admin-ui"
 import { SearchInput } from "@/features/admin/components/search-input"
-import { ClientBadge, OnboardingBadge, RoleBadge } from "@/features/admin/components/user-badges"
+import { OnboardingBadge, RoleBadge } from "@/features/admin/components/user-badges"
 import { UserList, type UserColumn } from "@/features/admin/components/user-list"
 import { listUsers } from "@/features/admin/queries"
 import { parseUserFilters, toQueryString } from "@/features/admin/search-params"
 import { formatDate } from "@/lib/dates"
 
-export const metadata: Metadata = { title: "Website users" }
+export const metadata: Metadata = { title: "Clients" }
 
 const COLUMNS: UserColumn[] = [
+  {
+    header: "Client since",
+    // Always set here; the list only holds clients.
+    cell: (user) => (user.clientSince ? formatDate(user.clientSince) : "—"),
+    className: "text-muted-foreground",
+  },
   {
     header: "Joined",
     cell: (user) => formatDate(user.createdAt),
@@ -23,26 +29,21 @@ const COLUMNS: UserColumn[] = [
       <OnboardingBadge onboardedAt={user.onboardedAt} skippedAt={user.onboardingSkippedAt} />
     ),
   },
-  {
-    header: "Client",
-    cell: (user) =>
-      user.clientSince ? <ClientBadge /> : <span className="text-xs text-muted-foreground">—</span>,
-  },
   { header: "Role", cell: (user) => <RoleBadge role={user.role} /> },
 ]
 
-export default async function AdminUsersPage(props: PageProps<"/admin/users">) {
+export default async function AdminClientsPage(props: PageProps<"/admin/clients">) {
   const filters = parseUserFilters(await props.searchParams)
-  const { items, total, pageCount } = await listUsers(filters)
+  const { items, total, pageCount } = await listUsers({ ...filters, clientsOnly: true })
 
   return (
     <>
       <AdminHeader
-        title="Website users"
-        description={`People with an account on the site (${total.toLocaleString("en-US")}). Separate from coaching applicants.`}
+        title="Clients"
+        description={`Website users who are also coaching clients (${total.toLocaleString("en-US")}). Mark someone as a client from their user page.`}
       >
         <div className="sm:w-80">
-          <SearchInput label="Search users" placeholder="Search name or email…" />
+          <SearchInput label="Search clients" placeholder="Search name or email…" />
         </div>
       </AdminHeader>
 
@@ -51,13 +52,13 @@ export default async function AdminUsersPage(props: PageProps<"/admin/users">) {
           <EmptyState
             icon={SearchXIcon}
             title="No matches"
-            description={`No users match “${filters.q}”.`}
+            description={`No clients match “${filters.q}”.`}
           />
         ) : (
           <EmptyState
-            icon={UsersRoundIcon}
-            title="No users yet"
-            description="Accounts appear here when people sign up on the site."
+            icon={HandshakeIcon}
+            title="No clients yet"
+            description="Open a website user and choose “Make client” to list them here."
           />
         )
       ) : (
@@ -67,11 +68,15 @@ export default async function AdminUsersPage(props: PageProps<"/admin/users">) {
             columns={COLUMNS}
             mobileMeta={(user) => (
               <>
+                {user.clientSince && (
+                  <span className="text-xs text-muted-foreground">
+                    Client since {formatDate(user.clientSince)}
+                  </span>
+                )}
                 <OnboardingBadge
                   onboardedAt={user.onboardedAt}
                   skippedAt={user.onboardingSkippedAt}
                 />
-                {user.clientSince && <ClientBadge />}
                 <RoleBadge role={user.role} />
               </>
             )}
@@ -80,7 +85,7 @@ export default async function AdminUsersPage(props: PageProps<"/admin/users">) {
           <Pagination
             page={filters.page}
             pageCount={pageCount}
-            hrefFor={(page) => `/admin/users${toQueryString({ q: filters.q, page })}`}
+            hrefFor={(page) => `/admin/clients${toQueryString({ q: filters.q, page })}`}
           />
         </>
       )}

@@ -7,10 +7,12 @@ powerlifting team. It has:
 - **Coaching application** (`/application`). Saved to the database, emailed to the coach, and
   copied to the applicant.
 - **Free tools** (`/tdee-calculator`), which autofill from a signed-in user's profile.
+- **Resources** (`/resources/mobility-vault`): the mobility, flexibility and warm-up vault, with a
+  page per lift.
 - **Website accounts** (Clerk) with onboarding (`/onboarding`) and a profile (`/profile`). These
   are for site users, separate from coaching clients.
-- **Admin panel** (`/admin`) for Coach Ty to review applications, browse users and edit his coach
-  profile.
+- **Admin panel** (`/admin`) for Coach Ty to review applications, browse users, mark coaching
+  clients and edit his coach profile.
 - **Traffic analytics** (`/admin/analytics`) with traffic trends, sources, visitor locations,
   device breakdowns, a searchable visitor log and automatic retention.
 
@@ -73,7 +75,7 @@ pnpm db:studio    # browse and edit the database
 prisma/                schema.prisma, migrations, seed.ts
 src/
   app/
-    (marketing)/       landing page, /application
+    (marketing)/       landing page, /application, /gallery, /resources
     (tools)/           /tdee-calculator
     (account)/         /onboarding, /profile
     (auth)/            Clerk sign-in / sign-up
@@ -126,7 +128,9 @@ path there.
   answer, **Newer/Older** buttons, **Mark processed / unprocessed**, and **Delete**, which asks
   for confirmation first.
 - **Users**: website accounts only, separate from applicants. Search by name or email. Each
-  user's detail page shows their profile and estimated maintenance calories.
+  user's detail page shows their profile and estimated maintenance calories, and a **Make client**
+  button that marks the account as a coaching client.
+- **Clients**: the website users marked as clients, most recent first, with the same search.
 - **Coach profile**: name, title, credentials, bio, home base, where the team's lifters are, and
   the **world / American / state record counts**. Saving updates the landing page and the
   calculator's coaching card for everyone.

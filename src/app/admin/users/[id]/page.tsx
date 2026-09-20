@@ -1,4 +1,4 @@
-import { ArrowLeftIcon, CalendarIcon, MailIcon, UserRoundXIcon } from "lucide-react"
+import { ArrowLeftIcon, CalendarIcon, HandshakeIcon, MailIcon, UserRoundXIcon } from "lucide-react"
 import type { Metadata } from "next"
 import Link from "next/link"
 import { notFound } from "next/navigation"
@@ -6,10 +6,12 @@ import { notFound } from "next/navigation"
 import { EmptyState } from "@/features/admin/components/admin-ui"
 import {
   Avatar,
+  ClientBadge,
   displayName,
   OnboardingBadge,
   RoleBadge,
 } from "@/features/admin/components/user-badges"
+import { UserClientToggle } from "@/features/admin/components/user-client-toggle"
 import { getUserDetail } from "@/features/admin/queries"
 import { ageOn, dateToBirthday, formatBirthday } from "@/features/profile/lib/birthday"
 import { profileRecordToTdeeInput } from "@/features/profile/mappers"
@@ -47,6 +49,7 @@ export default async function AdminUserPage(props: PageProps<"/admin/users/[id]"
               {displayName(user)}
             </h1>
             <RoleBadge role={user.role} />
+            {user.clientSince && <ClientBadge />}
           </div>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
             <a
@@ -60,9 +63,18 @@ export default async function AdminUserPage(props: PageProps<"/admin/users/[id]"
               <CalendarIcon className="size-4 text-highlight" />
               Joined {formatDate(user.createdAt)} ({formatRelative(user.createdAt)})
             </span>
+            {user.clientSince && (
+              <span className="inline-flex items-center gap-1.5">
+                <HandshakeIcon className="size-4 text-highlight" />
+                Client since {formatDate(user.clientSince)}
+              </span>
+            )}
           </div>
         </div>
-        <OnboardingBadge onboardedAt={user.onboardedAt} skippedAt={user.onboardingSkippedAt} />
+        <div className="flex flex-wrap items-center gap-3">
+          <OnboardingBadge onboardedAt={user.onboardedAt} skippedAt={user.onboardingSkippedAt} />
+          <UserClientToggle id={user.id} client={Boolean(user.clientSince)} />
+        </div>
       </header>
 
       {profile && result ? (

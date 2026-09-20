@@ -28,13 +28,21 @@ function applicationWhere(
 
 /** Deduplicated per request (the layout and overview both need it). */
 export const getAdminCounts = cache(async () => {
-  const [unprocessed, processed, users, onboarded] = await db.$transaction([
+  const [unprocessed, processed, users, onboarded, clients] = await db.$transaction([
     db.application.count({ where: { status: "UNPROCESSED" } }),
     db.application.count({ where: { status: "PROCESSED" } }),
     db.user.count(),
     db.user.count({ where: { onboardedAt: { not: null } } }),
+    db.user.count({ where: { clientSince: { not: null } } }),
   ])
-  return { unprocessed, processed, applications: unprocessed + processed, users, onboarded }
+  return {
+    unprocessed,
+    processed,
+    applications: unprocessed + processed,
+    users,
+    onboarded,
+    clients,
+  }
 })
 
 export async function getRecentActivity() {
@@ -142,15 +150,25 @@ export async function getApplicationWithNeighbors(
   return { application, newerId: newer?.id ?? null, olderId: older?.id ?? null }
 }
 
-export async function listUsers({ q, page }: { q: string; page: number }) {
+/** Website users, newest first. With `clientsOnly`, just the coaching clients, most recent first. */
+export async function listUsers({
+  q,
+  page,
+  clientsOnly = false,
+}: {
+  q: string
+  page: number
+  clientsOnly?: boolean
+}) {
   const contains = { contains: q, mode: "insensitive" as const }
-  const where: Prisma.UserWhereInput = q
-    ? { OR: [{ email: contains }, { firstName: contains }, { lastName: contains }] }
-    : {}
+  const where: Prisma.UserWhereInput = {
+    ...(clientsOnly && { clientSince: { not: null } }),
+    ...(q && { OR: [{ email: contains }, { firstName: contains }, { lastName: contains }] }),
+  }
   const [items, total] = await db.$transaction([
     db.user.findMany({
       where,
-      orderBy: { createdAt: "desc" },
+      orderBy: clientsOnly ? { clientSince: "desc" } : { createdAt: "desc" },
       skip: (page - 1) * PAGE_SIZE,
       take: PAGE_SIZE,
       select: {
@@ -162,6 +180,7 @@ export async function listUsers({ q, page }: { q: string; page: number }) {
         role: true,
         onboardedAt: true,
         onboardingSkippedAt: true,
+        clientSince: true,
         createdAt: true,
       },
     }),

@@ -41,6 +41,22 @@ export async function deleteApplication(id: string): Promise<AdminActionResult> 
   return { ok: true }
 }
 
+/** Marks a website user as a coaching client (or takes that back). Admins can be clients too. */
+export async function setUserClient(id: string, client: boolean): Promise<AdminActionResult> {
+  await requireAdmin()
+  try {
+    await db.user.update({
+      where: { id },
+      data: { clientSince: client ? new Date() : null },
+    })
+  } catch (error) {
+    console.error("[admin] Could not update user:", error)
+    return { ok: false, message: "Couldn't update the user. They may have been deleted." }
+  }
+  revalidatePath("/admin", "layout")
+  return { ok: true }
+}
+
 export type CoachProfileResult =
   | { ok: true }
   | {

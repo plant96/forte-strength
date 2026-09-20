@@ -54,12 +54,15 @@ model User {
   role                Role      @default(USER)
   onboardedAt         DateTime?
   onboardingSkippedAt DateTime?
+  /// Set when the coach marks the account as a coaching client; null otherwise.
+  clientSince         DateTime?
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
   profile             Profile?
 
   @@index([email])
   @@index([createdAt])
+  @@index([clientSince])
 }
 
 /// Body and activity stats used to autofill the tools.

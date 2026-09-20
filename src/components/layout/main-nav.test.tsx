@@ -132,7 +132,7 @@ describe("MainNav dropdowns", () => {
     await user.click(resources())
     await opens(resources)
 
-    await user.click(await screen.findByRole("link", { name: /Squat/ }))
+    await user.click(await screen.findByRole("link", { name: /Mobility Vault/ }))
 
     await closes(resources)
     expect(resources()).not.toHaveAttribute("data-pinned")
