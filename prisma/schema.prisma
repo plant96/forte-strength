@@ -329,7 +329,8 @@ model PrEntry {
   loggedById String?
   createdAt  DateTime @default(now())
 
-  /// One point per date keeps the line clean; a heavier same-day record replaces it.
-  @@unique([seriesId, achievedOn])
-  @@index([seriesId, achievedOn])
+  /// Two records on one day are two points, stacked on the same date — that is what a
+  /// double-bodyweight morning looks like, and flattening it to one would hide half of it.
+  /// `createdAt` breaks the tie, so a day's records keep the order they were logged in.
+  @@index([seriesId, achievedOn, createdAt])
 }

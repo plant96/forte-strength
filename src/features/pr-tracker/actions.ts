@@ -172,8 +172,8 @@ export interface AddEntryOutcome {
   placement: "first" | "append" | "backfill"
   /** The record this one beat, for the delta chip. Null on a first entry or an early back-fill. */
   previousKg: number | null
-  /** True when a record already existed on that day and this one took its place. */
-  replaced: boolean
+  /** True when another record already sits on this day, so the line steps straight up. */
+  sameDay: boolean
 }
 
 export type AddEntryResult =
@@ -235,7 +235,8 @@ export async function addPrEntry(input: unknown): Promise<AddEntryResult> {
 
       const existing = await tx.prEntry.findMany({
         where: { seriesId: series.id },
-        orderBy: { achievedOn: "asc" },
+        // Two records can share a day, so `createdAt` decides which came second.
+        orderBy: [{ achievedOn: "asc" }, { createdAt: "asc" }],
         select: { id: true, weightKg: true, achievedOn: true, loggedById: true },
       })
 
@@ -250,16 +251,14 @@ export async function addPrEntry(input: unknown): Promise<AddEntryResult> {
       // fields once this value crosses back out of the transaction.
       if (!verdict.ok) return { status: "refused" as const, verdict }
 
-      const entry = await tx.prEntry.upsert({
-        where: { seriesId_achievedOn: { seriesId: series.id, achievedOn: dayToDate(achievedOn) } },
-        create: {
+      const entry = await tx.prEntry.create({
+        data: {
           seriesId: series.id,
           userId: actor.athleteId,
           weightKg,
           achievedOn: dayToDate(achievedOn),
           loggedById: actor.loggedById,
         },
-        update: { weightKg, loggedById: actor.loggedById },
         select: { id: true },
       })
 
@@ -269,7 +268,7 @@ export async function addPrEntry(input: unknown): Promise<AddEntryResult> {
 
       const entries = await tx.prEntry.findMany({
         where: { seriesId: series.id },
-        orderBy: { achievedOn: "asc" },
+        orderBy: [{ achievedOn: "asc" }, { createdAt: "asc" }],
         select: { id: true, weightKg: true, achievedOn: true, loggedById: true },
       })
 
@@ -277,7 +276,7 @@ export async function addPrEntry(input: unknown): Promise<AddEntryResult> {
         status: "saved" as const,
         placement: verdict.placement,
         previousKg: verdict.previous?.weightKg ?? null,
-        replaced: verdict.replaces !== null,
+        sameDay: points.some((point) => point.achievedOn === achievedOn),
         seriesId: series.id,
         entryId: entry.id,
         entries,
@@ -310,7 +309,7 @@ export async function addPrEntry(input: unknown): Promise<AddEntryResult> {
         entryId: outcome.entryId,
         placement: outcome.placement,
         previousKg: outcome.previousKg,
-        replaced: outcome.replaced,
+        sameDay: outcome.sameDay,
       },
     }
   } catch (error) {

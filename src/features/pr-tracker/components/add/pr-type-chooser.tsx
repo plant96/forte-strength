@@ -134,7 +134,13 @@ export function PrTypeChooser({ series, unit, value, onChange }: PrTypeChooserPr
                     onClick={() => setBuilding(kind)}
                     className="self-start text-xs font-medium text-highlight hover:underline"
                   >
-                    {existing.length > 0 ? "New rep scheme" : "Choose reps"}
+                    {kind === "volume"
+                      ? existing.length > 0
+                        ? "Different sets and reps"
+                        : "Choose sets and reps"
+                      : existing.length > 0
+                        ? "Different reps"
+                        : "Choose reps"}
                   </button>
                 ) : (
                   <m.div
@@ -183,8 +189,11 @@ export function PrTypeChooser({ series, unit, value, onChange }: PrTypeChooserPr
 }
 
 /**
- * Confirms a hand-built rep scheme — and says so plainly when that scheme already exists,
+ * Confirms a hand-picked rep scheme — and says so plainly when that scheme already exists,
  * so the lifter knows they are continuing a history rather than starting one.
+ *
+ * The wording is "choose", never "start": records are logged after the session, so nothing
+ * is being begun here. The lifter is telling us which set the weight belonged to.
  */
 function UseThisButton({
   kind,
@@ -211,8 +220,8 @@ function UseThisButton({
       className="rounded-lg bg-primary/15 px-3 py-2 text-xs font-medium text-foreground ring-1 ring-primary/30 transition-colors hover:bg-primary/25"
     >
       {duplicate
-        ? `Add to your ${shapeChipLabel(shape)} history`
-        : `Start ${shapeChipLabel(shape)}`}
+        ? `Choose ${shapeChipLabel(shape)} · already tracked`
+        : `Choose ${shapeChipLabel(shape)}`}
     </button>
   )
 }

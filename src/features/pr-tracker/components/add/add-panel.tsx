@@ -47,12 +47,24 @@ export function AddPanel({ exercises, unit: initialUnit, basePath, athleteId }: 
   }
 
   function reset(keepExercise: boolean) {
+    const logged = outcome?.series
     setOutcome(null)
     setShape(null)
+
     if (!keepExercise) {
       setExercise(null)
       setSeries([])
+    } else if (logged) {
+      // Fold the series we just wrote back into the list. Without this, logging a second
+      // record in the same sitting would show the record to beat — and the "log as your
+      // baseline" wording — from before the first one, correcting only on a refresh.
+      setSeries((current) => {
+        const index = current.findIndex((item) => item.id === logged.id)
+        if (index === -1) return [...current, logged]
+        return current.map((item, at) => (at === index ? logged : item))
+      })
     }
+
     // The server components behind this panel hold the lists it was built from.
     router.refresh()
   }

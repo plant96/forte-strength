@@ -109,7 +109,11 @@ export function PrChart({
   const [phase, setPhase] = useState<Phase>(celebrate ? "grow" : "done")
   const [hovered, setHovered] = useState<number | null>(null)
 
-  const sorted = [...entries].sort((a, b) => (a.achievedOn < b.achievedOn ? -1 : 1))
+  // Records can share a day, and the order within that day is the order they were logged.
+  // Returning 0 for equal days keeps the sort stable so that order survives.
+  const sorted = [...entries].sort((a, b) =>
+    a.achievedOn < b.achievedOn ? -1 : a.achievedOn > b.achievedOn ? 1 : 0,
+  )
   const newIndex = celebrate ? sorted.findIndex((entry) => entry.id === celebrate.entryId) : -1
   const before = newIndex >= 0 ? sorted.filter((_, index) => index !== newIndex) : sorted
 
@@ -248,10 +252,13 @@ export function PrChart({
         if (spark || !plotWidth || !settled) return
         const box = event.currentTarget.getBoundingClientRect()
         const x = event.clientX - box.left
+        const y = event.clientY - box.top
         let nearest = 0
         let best = Infinity
         for (const [index, point] of allPoints.entries()) {
-          const distance = Math.abs(point.x - x)
+          // Weighted towards x, so sweeping across the plot still tracks the line — but
+          // y breaks the tie between two records stacked on the same day.
+          const distance = Math.abs(point.x - x) * 3 + Math.abs(point.y - y)
           if (distance < best) {
             best = distance
             nearest = index
@@ -509,10 +516,16 @@ function Tooltip({
  */
 function pickDateTicks(entries: EntryView[], count: number): Day[] {
   if (count <= 0 || entries.length === 0) return []
-  if (entries.length <= count) return entries.map((entry) => entry.achievedOn)
+
+  // Deduplicated, because several records can share a day and a date only needs labelling
+  // once — two ticks on one date would also collide as React keys.
+  const days = new Set<Day>()
+  if (entries.length <= count) {
+    for (const entry of entries) days.add(entry.achievedOn)
+    return [...days]
+  }
 
   const step = (entries.length - 1) / (count - 1)
-  const days = new Set<Day>()
   for (let index = 0; index < count; index++) {
     days.add(entries[Math.round(index * step)].achievedOn)
   }

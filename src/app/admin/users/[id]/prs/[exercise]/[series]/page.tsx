@@ -30,6 +30,7 @@ export default async function AdminClientSeriesPage(props: Props) {
   return (
     <SeriesPage
       exercise={detail.exercise}
+      shape={shape}
       series={detail.series}
       unit={unit}
       basePath={`/admin/users/${user.id}/prs`}

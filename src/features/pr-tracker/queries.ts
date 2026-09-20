@@ -3,6 +3,7 @@ import "server-only"
 import { unstable_rethrow } from "next/navigation"
 
 import { WEIGHT_UNIT_FROM_DB } from "@/features/profile/mappers"
+import type { Prisma } from "@/generated/prisma/client"
 import { db } from "@/server/db"
 import type { WeightUnit } from "@/lib/units"
 
@@ -149,16 +150,22 @@ export async function listExercises(userId: string): Promise<ExerciseListItem[]>
   })
 }
 
+/** Two records can share a day; `createdAt` keeps them in the order they were logged. */
+const ENTRY_ORDER: Prisma.PrEntryOrderByWithRelationInput[] = [
+  { achievedOn: "asc" },
+  { createdAt: "asc" },
+]
+
 const seriesSelect = {
   id: true,
   kind: true,
   sets: true,
   reps: true,
   entries: {
-    orderBy: { achievedOn: "asc" },
+    orderBy: ENTRY_ORDER,
     select: { id: true, weightKg: true, achievedOn: true, loggedById: true },
   },
-} as const
+} satisfies Prisma.PrSeriesSelect
 
 /** One movement with every series and entry on it — what the View panel renders. */
 export async function getExerciseDetail(
@@ -188,7 +195,12 @@ export async function getExerciseDetail(
   }
 }
 
-/** One series, for its dedicated page. */
+/**
+ * One series, for its dedicated page.
+ *
+ * Returns null only when the *movement* is unknown. A series with nothing left in it comes
+ * back as `series: null`, because deleting your last record should say so rather than 404.
+ */
 export async function getSeriesDetail(userId: string, slug: string, shape: SeriesShape) {
   const exercise = await db.exercise.findUnique({
     where: { userId_slug: { userId, slug } },
@@ -203,12 +215,12 @@ export async function getSeriesDetail(userId: string, slug: string, shape: Serie
     },
   })
 
-  const series = exercise?.series[0]
-  if (!exercise || !series) return null
+  if (!exercise) return null
 
+  const series = exercise.series[0]
   return {
     exercise: { id: exercise.id, name: exercise.name, slug: exercise.slug },
-    series: toSeriesView(series),
+    series: series && series.entries.length > 0 ? toSeriesView(series) : null,
   }
 }
 
@@ -226,7 +238,7 @@ export async function getTrackerSummary(userId: string): Promise<TrackerSummary>
     where: { userId },
     select: {
       exerciseId: true,
-      entries: { orderBy: { achievedOn: "asc" }, select: { weightKg: true, achievedOn: true } },
+      entries: { orderBy: ENTRY_ORDER, select: { weightKg: true, achievedOn: true } },
     },
   })
 

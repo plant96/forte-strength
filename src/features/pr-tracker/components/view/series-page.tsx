@@ -1,11 +1,13 @@
-import { ArrowLeftIcon } from "lucide-react"
+import { ArrowLeftIcon, PlusIcon, TrophyIcon } from "lucide-react"
 import Link from "next/link"
+
+import { Button } from "@/components/ui/button"
 
 import type { WeightUnit } from "@/lib/units"
 
 import { describeDay } from "../../lib/day"
 import { currentRecord } from "../../lib/records"
-import { seriesLabel, seriesTitle } from "../../lib/series"
+import { seriesLabel, seriesTitle, type SeriesShape } from "../../lib/series"
 import { formatWeightValue } from "../../lib/weight"
 import type { ExerciseSummary, SeriesView } from "../../queries"
 import { PrChart } from "../chart/pr-chart"
@@ -20,6 +22,7 @@ import { EntryList } from "./entry-list"
  */
 export function SeriesPage({
   exercise,
+  shape,
   series,
   unit,
   basePath,
@@ -27,12 +30,20 @@ export function SeriesPage({
   athleteId,
 }: {
   exercise: ExerciseSummary
-  series: SeriesView
+  /** Comes from the URL, so the page can name itself even with nothing logged. */
+  shape: SeriesShape
+  series: SeriesView | null
   unit: WeightUnit
   basePath: string
   backLabel: string
   athleteId?: string
 }) {
+  if (!series) {
+    return (
+      <EmptySeries exercise={exercise} shape={shape} basePath={basePath} backLabel={backLabel} />
+    )
+  }
+
   const record = currentRecord(series.entries)
   const first = series.entries[0]
   const gainKg = record && first && record.id !== first.id ? record.weightKg - first.weightKg : null
@@ -50,7 +61,7 @@ export function SeriesPage({
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="font-heading text-xs font-semibold tracking-[0.18em] text-highlight uppercase">
-            {seriesLabel(series)}
+            {seriesLabel(shape)}
           </p>
           <h1 className="mt-1 font-heading text-3xl font-bold tracking-tight uppercase sm:text-4xl">
             {exercise.name}
@@ -89,6 +100,55 @@ export function SeriesPage({
         </h2>
         <EntryList entries={series.entries} unit={unit} athleteId={athleteId} />
       </section>
+    </div>
+  )
+}
+
+/**
+ * What is left after the last record on a series is deleted. The series row itself is gone
+ * by then, but the movement and the URL are still perfectly valid — so this says what
+ * happened instead of pretending the page never existed.
+ */
+function EmptySeries({
+  exercise,
+  shape,
+  basePath,
+  backLabel,
+}: {
+  exercise: ExerciseSummary
+  shape: SeriesShape
+  basePath: string
+  backLabel: string
+}) {
+  return (
+    <div className="flex flex-col gap-6">
+      <Link
+        href={basePath}
+        className="inline-flex w-fit items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+      >
+        <ArrowLeftIcon className="size-4" />
+        {backLabel}
+      </Link>
+
+      <div className="flex flex-col items-center gap-4 rounded-2xl bg-card px-6 py-16 text-center ring-1 ring-foreground/10">
+        <span className="grid size-12 place-items-center rounded-xl bg-muted text-muted-foreground">
+          <TrophyIcon className="size-5" />
+        </span>
+        <div>
+          <h1 className="font-heading text-2xl font-bold tracking-tight uppercase">
+            No records here yet
+          </h1>
+          <p className="mt-1.5 text-sm text-muted-foreground">
+            Nothing is logged for the {seriesLabel(shape).toLowerCase()} on {exercise.name}.
+          </p>
+        </div>
+        <Button asChild className="h-10">
+          <Link href={`${basePath}?panel=add`}>
+            <PlusIcon />
+            Log a record
+          </Link>
+        </Button>
+      </div>
     </div>
   )
 }

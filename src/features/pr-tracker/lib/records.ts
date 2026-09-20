@@ -8,6 +8,11 @@ import type { Day } from "./day"
  * than the record after it. Appending to the end only has a "before", so it reduces to the
  * obvious rule; back-filling gets checked on both sides.
  *
+ * Several records can share a day — hitting a PR and then beating it again in the same
+ * session is a real thing, and it draws as a vertical step. A new record lands *after*
+ * every record already on its day, so "the one before it" may well be from the same
+ * morning.
+ *
  * Pure and exhaustively tested, because the server action is the only thing standing
  * between this rule and a direct POST.
  */
@@ -25,23 +30,11 @@ export interface Candidate {
 
 export type RecordVerdict =
   /** The first entry on a series: nothing to beat, so it sets the baseline. */
-  | { ok: true; placement: "first"; replaces: RecordPoint | null; previous: null; next: null }
+  | { ok: true; placement: "first"; previous: null; next: null }
   /** A new record at the end of the line — the common case. */
-  | {
-      ok: true
-      placement: "append"
-      replaces: RecordPoint | null
-      previous: RecordPoint | null
-      next: null
-    }
+  | { ok: true; placement: "append"; previous: RecordPoint | null; next: null }
   /** Slotted in between two existing records, or before the earliest one. */
-  | {
-      ok: true
-      placement: "backfill"
-      replaces: RecordPoint | null
-      previous: RecordPoint | null
-      next: RecordPoint
-    }
+  | { ok: true; placement: "backfill"; previous: RecordPoint | null; next: RecordPoint }
   /** Appending something no heavier than the current record. */
   | { ok: false; reason: "not-heavier"; previous: RecordPoint }
   /** Back-filling before the earliest record, with something no lighter than it. */
@@ -60,6 +53,11 @@ function heavier(a: number, b: number) {
   return a - b > EPSILON
 }
 
+/**
+ * Chronological order. `Array.prototype.sort` is stable, so records sharing a day keep the
+ * order they arrived in — which, for a list read back from the database ordered by
+ * `createdAt`, is the order they were logged.
+ */
 export function sortPoints(points: readonly RecordPoint[]) {
   return [...points].sort((a, b) =>
     a.achievedOn < b.achievedOn ? -1 : a.achievedOn > b.achievedOn ? 1 : 0,
@@ -69,19 +67,16 @@ export function sortPoints(points: readonly RecordPoint[]) {
 export function checkRecord(entries: readonly RecordPoint[], candidate: Candidate): RecordVerdict {
   const sorted = sortPoints(entries)
 
-  // A record logged on a date that already has one replaces it, so the chart keeps one
-  // point per day. The one being replaced is not its own neighbour.
-  const replaces = sorted.find((entry) => entry.achievedOn === candidate.achievedOn) ?? null
-  const others = replaces ? sorted.filter((entry) => entry.id !== replaces.id) : sorted
-
-  if (others.length === 0) {
-    return { ok: true, placement: "first", replaces, previous: null, next: null }
+  if (sorted.length === 0) {
+    return { ok: true, placement: "first", previous: null, next: null }
   }
 
+  // The new record joins the end of its own day, so everything on that day counts as
+  // before it and only later days count as after.
   let previous: RecordPoint | null = null
   let next: RecordPoint | null = null
-  for (const entry of others) {
-    if (entry.achievedOn < candidate.achievedOn) previous = entry
+  for (const entry of sorted) {
+    if (entry.achievedOn <= candidate.achievedOn) previous = entry
     else if (next === null) next = entry
   }
 
@@ -95,8 +90,8 @@ export function checkRecord(entries: readonly RecordPoint[], candidate: Candidat
     return { ok: false, reason: "not-lighter", next: next as RecordPoint }
   }
 
-  if (next) return { ok: true, placement: "backfill", replaces, previous, next }
-  return { ok: true, placement: "append", replaces, previous, next: null }
+  if (next) return { ok: true, placement: "backfill", previous, next }
+  return { ok: true, placement: "append", previous, next: null }
 }
 
 /** The heaviest entry, which for a climbing line is always the latest one. */

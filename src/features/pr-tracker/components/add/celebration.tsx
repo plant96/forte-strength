@@ -55,8 +55,8 @@ export function Celebration({
       ? "First entry logged. Beat it and the line starts climbing."
       : outcome.placement === "backfill"
         ? "Your line re-routes through it and keeps climbing."
-        : outcome.replaced
-          ? "That day's record has been replaced with the heavier lift."
+        : outcome.sameDay
+          ? "Twice in one session — the line steps straight up."
           : "That is the heaviest you have ever moved here."
 
   return (

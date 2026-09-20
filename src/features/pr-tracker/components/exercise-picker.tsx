@@ -2,6 +2,7 @@
 
 import {
   CheckIcon,
+  LibraryIcon,
   Loader2Icon,
   PlusIcon,
   SearchIcon,
@@ -13,6 +14,15 @@ import { useState, useTransition } from "react"
 
 import { Button } from "@/components/ui/button"
 import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
   InputGroup,
   InputGroupAddon,
   InputGroupButton,
@@ -21,7 +31,13 @@ import {
 import type { WeightUnit } from "@/lib/units"
 
 import { createExercise, type CreateExerciseResult } from "../actions"
-import { GROUP_LABELS, searchCatalog, type CatalogEntry } from "../catalog"
+import {
+  EXERCISE_CATALOG,
+  GROUP_LABELS,
+  GROUP_ORDER,
+  searchCatalog,
+  type CatalogEntry,
+} from "../catalog"
 import { describeDay } from "../lib/day"
 import { compactName } from "../lib/slug"
 import { formatWeight } from "../lib/weight"
@@ -32,8 +48,10 @@ import type { ExerciseListItem, ExerciseSummary } from "../queries"
  *
  * The ordering is the point. What the lifter already tracks comes first and biggest,
  * because picking an existing movement is almost always what they mean. The curated
- * library comes second, so "ohp" lands on Overhead Press rather than becoming its own
- * entry. Typing a brand new name is last, and only offered once nothing else matches.
+ * library sits right beside the search box as a dropdown, so "ohp" lands on Overhead Press
+ * rather than becoming its own entry — a list of chips further down the page was too easy
+ * to scroll past, and a missed library is a duplicate waiting to happen. Typing a brand new
+ * name is last, and only offered once nothing else matches.
  *
  * The server still gets the final say: `createExercise` resolves aliases, reuses an exact
  * match, and refuses to fork something that looks like a typo until the lifter confirms.
@@ -72,10 +90,11 @@ export function ExercisePicker({
     : exercises
   const mineCompact = new Set(exercises.map((exercise) => compactName(exercise.name)))
 
-  // Library suggestions never repeat something they already track.
-  const suggestions = (trimmed ? searchCatalog(trimmed, 8) : starterLifts()).filter(
-    (entry) => !mineCompact.has(compactName(entry.name)),
-  )
+  // Library matches for what they are typing. Never repeats something already tracked —
+  // the "Your movements" list above covers those.
+  const suggestions: CatalogEntry[] = trimmed
+    ? searchCatalog(trimmed, 6).filter((entry) => !mineCompact.has(compactName(entry.name)))
+    : []
 
   const exactExists =
     mineCompact.has(needle) || suggestions.some((entry) => compactName(entry.name) === needle)
@@ -101,40 +120,46 @@ export function ExercisePicker({
 
   return (
     <div className="flex flex-col gap-5">
-      <InputGroup className="h-12 bg-card">
-        <InputGroupAddon align="inline-start">
-          {pending ? (
-            <Loader2Icon className="size-4 animate-spin text-muted-foreground" />
-          ) : (
-            <SearchIcon className="size-4 text-muted-foreground" />
-          )}
-        </InputGroupAddon>
-        <InputGroupInput
-          autoFocus
-          value={query}
-          onChange={(event) => {
-            setQuery(event.target.value)
-            setConfirm(null)
-            setError(null)
-          }}
-          onKeyDown={(event) => {
-            if (event.key === "Enter" && canCreate && !pending) {
-              event.preventDefault()
-              submit(trimmed)
-            }
-          }}
-          placeholder={mode === "create" ? "Search or add a movement" : "Search your movements"}
-          aria-label="Movement"
-          className="text-base placeholder:text-muted-foreground/60"
-        />
-        {query && (
-          <InputGroupAddon align="inline-end">
-            <InputGroupButton size="icon-xs" aria-label="Clear" onClick={() => setQuery("")}>
-              <XIcon />
-            </InputGroupButton>
+      <div className="flex flex-col gap-2 @md:flex-row">
+        <InputGroup className="h-12 flex-1 bg-card">
+          <InputGroupAddon align="inline-start">
+            {pending ? (
+              <Loader2Icon className="size-4 animate-spin text-muted-foreground" />
+            ) : (
+              <SearchIcon className="size-4 text-muted-foreground" />
+            )}
           </InputGroupAddon>
+          <InputGroupInput
+            autoFocus
+            value={query}
+            onChange={(event) => {
+              setQuery(event.target.value)
+              setConfirm(null)
+              setError(null)
+            }}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && canCreate && !pending) {
+                event.preventDefault()
+                submit(trimmed)
+              }
+            }}
+            placeholder={mode === "create" ? "Search or add a movement" : "Search your movements"}
+            aria-label="Movement"
+            className="text-base placeholder:text-muted-foreground/60"
+          />
+          {query && (
+            <InputGroupAddon align="inline-end">
+              <InputGroupButton size="icon-xs" aria-label="Clear" onClick={() => setQuery("")}>
+                <XIcon />
+              </InputGroupButton>
+            </InputGroupAddon>
+          )}
+        </InputGroup>
+
+        {mode === "create" && (
+          <LibrarySelect taken={mineCompact} disabled={pending} onPick={(name) => submit(name)} />
         )}
-      </InputGroup>
+      </div>
 
       {confirm && (
         <NearDuplicateWarning
@@ -184,24 +209,31 @@ export function ExercisePicker({
         </section>
       )}
 
-      {mode === "create" && suggestions.length > 0 && (
+      {/* Typed matches from the library stay inline: once someone is typing, the fastest
+          path is the one already under their cursor. */}
+      {mode === "create" && trimmed.length > 0 && suggestions.length > 0 && (
         <section className="flex flex-col gap-2">
-          <SectionLabel>{trimmed ? "From the library" : "Common lifts"}</SectionLabel>
-          <div className="flex flex-wrap gap-2">
+          <SectionLabel>From the library</SectionLabel>
+          <ul className="grid gap-2 @md:grid-cols-2">
             {suggestions.map((entry) => (
-              <button
-                key={entry.slug}
-                type="button"
-                onClick={() => submit(entry.name)}
-                disabled={pending}
-                title={GROUP_LABELS[entry.group]}
-                className="inline-flex items-center gap-1.5 rounded-full bg-muted/60 py-1.5 pr-3.5 pl-3 text-sm text-muted-foreground ring-1 ring-foreground/10 transition-colors hover:bg-primary/15 hover:text-foreground hover:ring-primary/40 disabled:opacity-60"
-              >
-                <PlusIcon className="size-3.5" />
-                {entry.name}
-              </button>
+              <li key={entry.slug}>
+                <button
+                  type="button"
+                  onClick={() => submit(entry.name)}
+                  disabled={pending}
+                  className="group flex w-full items-center gap-3 rounded-xl bg-card/60 p-3.5 text-left ring-1 ring-foreground/10 transition-colors hover:bg-muted/60 hover:ring-primary/40 disabled:opacity-60"
+                >
+                  <span className="flex min-w-0 flex-1 flex-col">
+                    <span className="truncate font-medium">{entry.name}</span>
+                    <span className="truncate text-xs text-muted-foreground">
+                      {GROUP_LABELS[entry.group]}
+                    </span>
+                  </span>
+                  <PlusIcon className="size-4 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+                </button>
+              </li>
             ))}
-          </div>
+          </ul>
         </section>
       )}
 
@@ -219,7 +251,7 @@ export function ExercisePicker({
         </button>
       )}
 
-      {mine.length === 0 && suggestions.length === 0 && !canCreate && (
+      {mine.length === 0 && (!trimmed || suggestions.length === 0) && !canCreate && (
         <p className="py-6 text-center text-sm text-muted-foreground">
           {mode === "select"
             ? "No movements match. Log a record first and it will show up here."
@@ -303,21 +335,62 @@ function NearDuplicateWarning({
   )
 }
 
-/** A short, recognisable starting set for someone who tracks nothing yet. */
-function starterLifts(): CatalogEntry[] {
-  const wanted = [
-    "back-squat",
-    "bench-press",
-    "deadlift",
-    "overhead-press",
-    "barbell-row",
-    "front-squat",
-    "romanian-deadlift",
-    "pull-up",
-  ]
-  return wanted
-    .map((slug) => searchCatalog(slug.replace(/-/g, " "), 1)[0])
-    .filter((entry): entry is CatalogEntry => Boolean(entry))
+/**
+ * The whole curated library, grouped by body part, one control away.
+ *
+ * A dropdown rather than a list of chips: it reads as "there is a list here" even before
+ * it is opened, which is the point — someone who never notices the library is someone who
+ * types their own spelling of a lift that already exists.
+ */
+function LibrarySelect({
+  taken,
+  disabled,
+  onPick,
+}: {
+  /** Compact names already tracked, so the library never offers a duplicate. */
+  taken: Set<string>
+  disabled: boolean
+  onPick: (name: string) => void
+}) {
+  const groups = GROUP_ORDER.map((group) => ({
+    group,
+    entries: EXERCISE_CATALOG.filter(
+      (entry) => entry.group === group && !taken.has(compactName(entry.name)),
+    ),
+  })).filter((section) => section.entries.length > 0)
+
+  if (groups.length === 0) return null
+
+  return (
+    <Select
+      // Never holds a value: picking is an action, not a setting.
+      value=""
+      disabled={disabled}
+      onValueChange={(slug) => {
+        const entry = EXERCISE_CATALOG.find((candidate) => candidate.slug === slug)
+        if (entry) onPick(entry.name)
+      }}
+    >
+      <SelectTrigger className="h-12 w-full bg-card @md:w-56" aria-label="Browse the lift library">
+        <span className="flex items-center gap-2 text-muted-foreground">
+          <LibraryIcon className="size-4" />
+          <SelectValue placeholder="Browse all lifts" />
+        </span>
+      </SelectTrigger>
+      <SelectContent className="max-h-80">
+        {groups.map((section) => (
+          <SelectGroup key={section.group}>
+            <SelectLabel>{GROUP_LABELS[section.group]}</SelectLabel>
+            {section.entries.map((entry) => (
+              <SelectItem key={entry.slug} value={entry.slug}>
+                {entry.name}
+              </SelectItem>
+            ))}
+          </SelectGroup>
+        ))}
+      </SelectContent>
+    </Select>
+  )
 }
 
 export function PickedExercise({

@@ -12,15 +12,7 @@ import { compactName, slugify } from "./lib/slug"
  */
 
 export type MuscleGroup =
-  | "squat"
-  | "bench"
-  | "deadlift"
-  | "press"
-  | "back"
-  | "arms"
-  | "legs"
-  | "core"
-  | "olympic"
+  "squat" | "bench" | "deadlift" | "press" | "back" | "arms" | "legs" | "core" | "olympic"
 
 export const GROUP_LABELS: Record<MuscleGroup, string> = {
   squat: "Squat",

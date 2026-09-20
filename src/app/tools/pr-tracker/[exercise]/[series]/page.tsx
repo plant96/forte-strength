@@ -19,7 +19,7 @@ async function load(props: Props) {
   const detail = await getSeriesDetail(user.id, slug, shape)
   if (!detail) return null
 
-  return { ...detail, userId: user.id }
+  return { ...detail, shape, userId: user.id }
 }
 
 export async function generateMetadata(props: Props): Promise<Metadata> {
@@ -27,7 +27,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
   if (!data) return { title: "Record not found" }
 
   return {
-    title: seriesTitle(data.exercise.name, data.series),
+    title: seriesTitle(data.exercise.name, data.shape),
     robots: { index: false },
   }
 }
@@ -42,6 +42,7 @@ export default async function PrSeriesPage(props: Props) {
     <div className="mx-auto w-full max-w-4xl px-4 py-10 sm:px-6 sm:py-14">
       <SeriesPage
         exercise={data.exercise}
+        shape={data.shape}
         series={data.series}
         unit={unit}
         basePath="/tools/pr-tracker?panel=view"
