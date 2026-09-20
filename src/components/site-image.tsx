@@ -12,5 +12,5 @@ type SiteImageProps = Omit<ImageProps, "src" | "alt" | "width" | "height"> & {
  * the browser picks the smallest entry in the generated `srcset`.
  */
 export function SiteImage({ image, ...props }: SiteImageProps) {
-  return <Image src={image.src} alt={image.alt} placeholder="blur" {...props} />
+  return <Image src={image.src} alt={image.alt} placeholder="blur" quality={90} {...props} />
 }
