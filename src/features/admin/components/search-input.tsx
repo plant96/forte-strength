@@ -16,14 +16,20 @@ export function SearchInput({ placeholder, label }: { placeholder: string; label
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
-  const [value, setValue] = useState(searchParams.get("q") ?? "")
+  const query = searchParams.get("q") ?? ""
+  const [draft, setDraft] = useState({ query, value: query })
   const [isPending, startTransition] = useTransition()
   const timeout = useRef<number | undefined>(undefined)
 
-  useEffect(() => () => window.clearTimeout(timeout.current), [])
+  // Back/forward navigation can change the URL without remounting this input.
+  // Updating this component's own state during render keeps its focus intact.
+  if (draft.query !== query) setDraft({ query, value: query })
+  const value = draft.query === query ? draft.value : query
+
+  useEffect(() => () => window.clearTimeout(timeout.current), [query])
 
   function update(next: string) {
-    setValue(next)
+    setDraft({ query, value: next })
     window.clearTimeout(timeout.current)
     timeout.current = window.setTimeout(() => {
       const params = new URLSearchParams(searchParams.toString())

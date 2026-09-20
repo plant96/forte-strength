@@ -12,6 +12,7 @@ import { SiteHeader } from "@/components/layout/site-header"
 import { MotionProvider } from "@/components/motion/motion-provider"
 import { Toaster } from "@/components/ui/sonner"
 import { siteConfig } from "@/config/site"
+import { AnalyticsBeacon } from "@/features/analytics/components/analytics-beacon"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -80,6 +81,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             <SiteFooter />
           </MotionProvider>
           <Toaster position="bottom-right" />
+          <AnalyticsBeacon />
         </body>
       </html>
     </ClerkProvider>

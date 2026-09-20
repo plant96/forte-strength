@@ -39,6 +39,9 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
+  --color-chart-6: var(--chart-6);
+  --color-chart-7: var(--chart-7);
+  --color-chart-8: var(--chart-8);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -94,11 +97,30 @@
   --carbs: #3987e5;
   --fat: #c98500;
 
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
+  /*
+   * Categorical series, in fixed slot order — never cycled, never reassigned by
+   * rank. Validated as a set against the card surface (#131313): every slot sits
+   * in the dark lightness band, clears the chroma floor and 3:1 contrast, and
+   * every adjacent pair clears colour-blind separation (worst ΔE 8.4, protan).
+   * The existing macro colours are slots 1, 4 and 8 of this same palette.
+   * Re-run the validator if you reorder or restep these.
+   */
+  --chart-1: #3987e5; /* blue */
+  --chart-2: #d95926; /* orange */
+  --chart-3: #199e70; /* aqua */
+  --chart-4: #c98500; /* yellow */
+  --chart-5: #d55181; /* magenta */
+  --chart-6: #008300; /* green */
+  --chart-7: #9085e9; /* violet */
+  --chart-8: #e66767; /* red */
+
+  /* Sequential ramp for magnitude (choropleth, heatmap): one hue, dark to bright. */
+  --scale-1: #421b1b;
+  --scale-2: #682224;
+  --scale-3: #92242c;
+  --scale-4: #ba2936;
+  --scale-5: #e6424c;
+  --scale-6: #fd7273;
   --sidebar: oklch(0.185 0 0);
   --sidebar-foreground: oklch(0.967 0 0);
   --sidebar-primary: oklch(0.585 0.215 22);

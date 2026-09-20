@@ -23,8 +23,8 @@ export function AboutCoach({ coach }: { coach: CoachProfileData }) {
         <Reveal className="order-last lg:order-first">
           <div className="overflow-hidden rounded-3xl ring-1 ring-foreground/10">
             <SiteImage
-              image={siteImages.coachPlatform}
-              sizes="(min-width: 1024px) 560px, 100vw"
+              image={siteImages.coachTeamTrophy}
+              sizes="(min-width: 1024px) 520px, calc(100vw - 48px)"
               className="h-auto w-full"
             />
           </div>

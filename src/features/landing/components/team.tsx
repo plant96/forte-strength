@@ -34,26 +34,41 @@ export function Team({ coach }: { coach: CoachProfileData }) {
           </ul>
         </Reveal>
 
-        <div className="grid gap-4 md:grid-cols-3 md:grid-rows-2">
-          <Reveal className="overflow-hidden rounded-3xl ring-1 ring-foreground/10 md:col-span-2 md:row-span-2">
+        {/*
+          Every tile is square so the three line up exactly: the large tile spans both rows
+          (730px at full width) and the two stacked tiles come to 357 + 16 gap + 357 = 730.
+          The collage then sits in a square frame at close to its native ratio, and the two
+          portraits crop from the top so faces and trophies stay in frame.
+        */}
+        <div className="grid gap-4 md:grid-cols-3">
+          <Reveal className="relative aspect-square overflow-hidden rounded-3xl ring-1 ring-foreground/10 md:col-span-2 md:row-span-2">
             <SiteImage
-              image={siteImages.teamMeetDay}
-              sizes="(min-width: 768px) 66vw, 100vw"
-              className="h-full w-full object-cover"
+              image={siteImages.teamCollage}
+              fill
+              sizes="(min-width: 1152px) 730px, (min-width: 768px) calc(66.7vw - 37px), calc(100vw - 32px)"
+              className="object-cover"
             />
           </Reveal>
-          <Reveal delay={0.06} className="overflow-hidden rounded-3xl ring-1 ring-foreground/10">
+          <Reveal
+            delay={0.06}
+            className="relative aspect-square overflow-hidden rounded-3xl ring-1 ring-foreground/10"
+          >
             <SiteImage
-              image={siteImages.teamTraining}
-              sizes="(min-width: 768px) 33vw, 100vw"
-              className="h-full w-full object-cover"
+              image={siteImages.teamStateChampions}
+              fill
+              sizes="(min-width: 1152px) 357px, (min-width: 768px) calc(33.3vw - 27px), calc(100vw - 32px)"
+              className="object-cover object-top"
             />
           </Reveal>
-          <Reveal delay={0.12} className="overflow-hidden rounded-3xl ring-1 ring-foreground/10">
+          <Reveal
+            delay={0.12}
+            className="relative aspect-square overflow-hidden rounded-3xl ring-1 ring-foreground/10"
+          >
             <SiteImage
-              image={siteImages.athleteLift}
-              sizes="(min-width: 768px) 33vw, 100vw"
-              className="h-full w-full object-cover"
+              image={siteImages.athletePodium}
+              fill
+              sizes="(min-width: 1152px) 357px, (min-width: 768px) calc(33.3vw - 27px), calc(100vw - 32px)"
+              className="object-cover object-top"
             />
           </Reveal>
         </div>

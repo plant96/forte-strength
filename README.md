@@ -11,12 +11,16 @@ powerlifting team. It has:
   are for site users, separate from coaching clients.
 - **Admin panel** (`/admin`) for Coach Ty to review applications, browse users and edit his coach
   profile.
+- **Traffic analytics** (`/admin/analytics`) with traffic trends, sources, visitor locations,
+  device breakdowns, a searchable visitor log and automatic retention.
 
 ## Stack
 
 Next.js 16 (App Router, Turbopack, React Compiler) · React 19 · TypeScript (strict) ·
 Tailwind CSS v4 · shadcn/ui (Radix) · Motion · React Hook Form + Zod · Clerk · Prisma 7 +
 Neon Postgres · Resend + React Email · Vitest
+
+Analytics charts use Recharts; the SVG world map uses Natural Earth land data from `world-atlas`.
 
 ## Setup
 
@@ -126,6 +130,51 @@ path there.
 - **Coach profile**: name, title, credentials, bio, home base, where the team's lifters are, and
   the **world / American / state record counts**. Saving updates the landing page and the
   calculator's coaching card for everyone.
+
+## Traffic analytics
+
+Open **Admin → Analytics** (`/admin/analytics`). Reports include page views, visitors,
+sessions, bounce rate, visible time on page, period comparisons, traffic charts, top pages,
+referrers and campaigns, countries and cities, devices, browsers, operating systems,
+languages, a world map, an hourly activity heatmap, and a searchable, paginated visitor log.
+Bot-like user agents are filtered out by default. The live count means visitors with a
+recorded page view in the last five minutes, rather than a continuous presence indicator.
+Browsers that block the collector and bots that do not execute JavaScript are not counted.
+
+The browser sends an asynchronous request to `/api/collect` on page navigation and reports
+visible time when a view is hidden or ends. Admin, API, internal Next.js and sign-in/sign-up
+paths are excluded. No form answers or account IDs are included. First-party HTTP-only
+cookies identify a visitor for up to a year and group page views into sessions with a
+30-minute gap. The public `/privacy` notice describes this collection and is linked in the footer.
+
+Configuration is documented in `.env.example`:
+
+- `ANALYTICS_RETENTION_DAYS`: visit rows, including full IP addresses, expire after 90 days
+  by default. Accepts whole days from 1 through 3650; invalid values fall back to 90.
+  All charts use the retained history, so a 12-month range cannot recover purged data.
+- `ANALYTICS_TIMEZONE`: IANA timezone for charts and log dates; defaults to `America/New_York`.
+- `ANALYTICS_GEOIP_ENDPOINT`: optional JSON endpoint with an `{ip}` placeholder, such as
+  `https://ipapi.co/{ip}/json/`. Hosting location headers are used first. Leave blank for
+  headers only; enabling a provider sends visitor IPs to that provider. Local/private IPs
+  are not looked up. Location is approximate, and absent data is shown as unknown.
+- `CRON_SECRET`: a random secret of at least 16 characters, required for scheduled cleanup.
+
+On Vercel, `vercel.json` schedules a daily request to `/api/cron/analytics-retention` at
+06:00 UTC. Set `CRON_SECRET` in the production environment before deploying;
+[Vercel sends it as a bearer token](https://vercel.com/docs/cron-jobs/manage-cron-jobs#securing-cron-jobs).
+On another host, schedule a daily GET to the same URL with `Authorization: Bearer <CRON_SECRET>`.
+The endpoint rejects requests if the secret is unset or incorrect. The collector also runs
+cleanup in the background, at most daily per warm process, as a fallback when traffic arrives.
+Keep the scheduler enabled to clean up even when the site has no traffic; a daily schedule
+can leave expired rows until the next successful run. Failed cleanup runs log an error.
+
+The analytics migrations are included in `prisma/migrations`. Run `pnpm db:deploy` before
+deploying the feature to another database. Collection failures do not interrupt page navigation.
+On self-hosted deployments, the reverse proxy must replace client-supplied forwarding and
+location headers with trusted values before forwarding requests to Next.js.
+
+Admin controls can immediately purge expired visits or erase stored IP addresses while
+keeping counts and locations. Erasing IPs does not prevent new visits from recording new IPs.
 
 ## TDEE calculator
 

@@ -6,16 +6,11 @@ type SiteImageProps = Omit<ImageProps, "src" | "alt" | "width" | "height"> & {
   image: SiteImageData
 }
 
-/** A site photo from `siteImages`. SVG placeholders skip the image optimizer. */
+/**
+ * A site photo from `siteImages`. Width, height and the blur placeholder come
+ * from the static import. Pass `sizes` describing the photo's rendered width so
+ * the browser picks the smallest entry in the generated `srcset`.
+ */
 export function SiteImage({ image, ...props }: SiteImageProps) {
-  return (
-    <Image
-      src={image.src}
-      alt={image.alt}
-      width={image.width}
-      height={image.height}
-      unoptimized={image.src.endsWith(".svg")}
-      {...props}
-    />
-  )
+  return <Image src={image.src} alt={image.alt} placeholder="blur" {...props} />
 }

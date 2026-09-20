@@ -38,6 +38,7 @@
     "react-dom": "19.2.8",
     "react-email": "^6.9.5",
     "react-hook-form": "^7.88.0",
+    "recharts": "^3.10.1",
     "resend": "^6.28.1",
     "server-only": "^0.0.1",
     "shadcn": "^4.21.0",
@@ -64,9 +65,11 @@
     "prettier-plugin-tailwindcss": "^0.8.1",
     "prisma": "7.10.0",
     "tailwindcss": "^4",
+    "topojson-client": "^3.1.0",
     "tsx": "^4.23.13",
     "typescript": "^5",
-    "vitest": "^5.0.1"
+    "vitest": "^5.0.1",
+    "world-atlas": "^2.0.2"
   },
   "packageManager": "pnpm@10.33.2"
 }

@@ -1,3 +1,5 @@
+import Link from "next/link"
+
 import { siteConfig } from "@/config/site"
 
 export function SiteFooter() {
@@ -7,7 +9,15 @@ export function SiteFooter() {
         <p>
           © {new Date().getFullYear()} {siteConfig.name}
         </p>
-        <p>Estimates for educational purposes only. Not medical advice.</p>
+        <div className="flex flex-col gap-2 sm:items-end">
+          <p>Estimates for educational purposes only. Not medical advice.</p>
+          <Link
+            href="/privacy"
+            className="underline-offset-4 hover:text-foreground hover:underline"
+          >
+            Analytics privacy
+          </Link>
+        </div>
       </div>
     </footer>
   )

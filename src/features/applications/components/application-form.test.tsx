@@ -128,6 +128,8 @@ describe("ApplicationForm", () => {
       await user.click(screen.getByRole("button", { name: "Continue" }))
       await stepHeading(next)
     }
+    // The heading updates before AnimatePresence finishes mounting this step's fields.
+    expect(await screen.findByPlaceholderText("I am prepared")).toHaveValue("I am prepared")
     await user.click(screen.getByRole("button", { name: "Submit application" }))
 
     await vi.waitFor(() => expect(useRouter().push).toHaveBeenCalledWith("/application/submitted"))
@@ -143,6 +145,7 @@ describe("ApplicationForm", () => {
       await user.click(screen.getByRole("button", { name: "Continue" }))
       await stepHeading(next)
     }
+    expect(await screen.findByPlaceholderText("I am prepared")).toHaveValue("sure")
     await user.click(screen.getByRole("button", { name: "Submit application" }))
 
     expect(await screen.findByText("Type “I am prepared” exactly to continue")).toBeInTheDocument()

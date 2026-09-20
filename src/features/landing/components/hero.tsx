@@ -71,7 +71,7 @@ export function Hero({ coach }: { coach: CoachProfileData }) {
             <SiteImage
               image={siteImages.coachPortrait}
               preload
-              sizes="(min-width: 1024px) 420px, 90vw"
+              sizes="(min-width: 1024px) 450px, (min-width: 420px) 384px, calc(100vw - 32px)"
               className="h-auto w-full"
             />
           </div>

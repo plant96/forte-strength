@@ -2,6 +2,7 @@
 
 import { cn } from "cn"
 import {
+  ChartNoAxesCombinedIcon,
   InboxIcon,
   LayoutDashboardIcon,
   MedalIcon,
@@ -13,6 +14,7 @@ import { usePathname } from "next/navigation"
 
 const ITEMS: { href: string; label: string; icon: LucideIcon; exact?: boolean }[] = [
   { href: "/admin", label: "Overview", icon: LayoutDashboardIcon, exact: true },
+  { href: "/admin/analytics", label: "Analytics", icon: ChartNoAxesCombinedIcon },
   { href: "/admin/applications", label: "Applications", icon: InboxIcon },
   { href: "/admin/users", label: "Website users", icon: UsersRoundIcon },
   { href: "/admin/coach", label: "Coach profile", icon: MedalIcon },

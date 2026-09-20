@@ -178,3 +178,76 @@ model CoachProfile {
   reach           String[]
   updatedAt       DateTime @updatedAt
 }
+
+// ---------------------------------------------------------------------------
+// Website analytics (anonymous visitors, deliberately not tied to User)
+// ---------------------------------------------------------------------------
+
+enum DeviceType {
+  DESKTOP
+  MOBILE
+  TABLET
+  BOT
+  UNKNOWN
+}
+
+/// One page view. Written by the asynchronous browser request to `POST /api/collect`.
+///
+/// `ipAddress` is personal data: it is retained for `ANALYTICS_RETENTION_DAYS`
+/// (default 90) and then purged by automatic retention cleanup. `userId` is a
+/// loose reference, not a relation — traffic history outlives the account.
+model PageView {
+  id        String   @id @default(cuid())
+  /// `timestamptz`, not a naive `timestamp`: this is an instant, and every
+  /// analytics query compares it against a JS `Date` and converts it into the
+  /// display timezone. A naive column makes both of those silently wrong.
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+
+  /// First-party cookie, stable across sessions. Not an account id.
+  visitorId String
+  /// Rotates after 30 minutes idle.
+  sessionId String
+  userId    String?
+
+  path         String
+  title        String?
+  referrer     String? @db.Text
+  /// Host only, so "google.com" groups regardless of query string. Null = direct.
+  referrerHost String?
+  utmSource    String?
+  utmMedium    String?
+  utmCampaign  String?
+
+  ipAddress String?
+  /// ISO 3166-1 alpha-2.
+  country   String?
+  region    String?
+  city      String?
+  latitude  Float?
+  longitude Float?
+  timezone  String?
+
+  userAgent String?    @db.Text
+  browser   String?
+  os        String?
+  device    DeviceType @default(UNKNOWN)
+  screenW   Int?
+  screenH   Int?
+  viewportW Int?
+  viewportH Int?
+  language  String?
+
+  /// Filled in by a `sendBeacon` when the page is hidden, so it can stay null.
+  durationMs Int?
+  /// First view of its session, which is what makes bounce rate computable.
+  isEntry    Boolean @default(false)
+  isBot      Boolean @default(false)
+
+  @@index([createdAt])
+  @@index([isBot, createdAt])
+  @@index([visitorId, createdAt])
+  @@index([sessionId, createdAt])
+  @@index([path, createdAt])
+  @@index([country, createdAt])
+  @@index([referrerHost, createdAt])
+}
