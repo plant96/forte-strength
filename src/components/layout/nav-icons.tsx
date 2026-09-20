@@ -4,6 +4,7 @@ import {
   DumbbellIcon,
   type LucideIcon,
   PersonStandingIcon,
+  TrophyIcon,
   VaultIcon,
 } from "lucide-react"
 
@@ -11,6 +12,7 @@ import type { NavIcon } from "@/config/site"
 
 export const NAV_ICONS: Record<NavIcon, LucideIcon> = {
   calculator: CalculatorIcon,
+  trophy: TrophyIcon,
   vault: VaultIcon,
   squat: PersonStandingIcon,
   bench: DumbbellIcon,

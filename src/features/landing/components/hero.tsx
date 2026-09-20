@@ -42,7 +42,7 @@ export function Hero({ coach }: { coach: CoachProfileData }) {
               </Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="h-12 px-5 text-sm font-semibold">
-              <Link href="/tdee-calculator">
+              <Link href="/tools/tdee-calculator">
                 <CalculatorIcon className="text-highlight" />
                 Try the free TDEE calculator
               </Link>

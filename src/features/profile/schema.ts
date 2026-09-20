@@ -1,6 +1,7 @@
 import { z } from "zod"
 
 import { createFormReader } from "@/lib/forms/reader"
+import type { WeightUnit } from "@/lib/units"
 import {
   BODY_FIELD_DEFAULTS,
   bodyFieldsShape,
@@ -17,10 +18,16 @@ export interface ProfileFormInput extends BodyFieldsInput {
   birthMonth: string
   birthDay: string
   birthYear: string
+  /**
+   * How they read gym weights. Deliberately not part of `bodyFieldsShape`: the TDEE
+   * calculator has no use for it, and it is saved onto `User`, not `Profile`.
+   */
+  liftUnit: WeightUnit
 }
 
 export interface ProfileFormValues extends BodyFieldsValues {
   birthday: Birthday
+  liftUnit: WeightUnit
 }
 
 export const PROFILE_FORM_DEFAULTS: ProfileFormInput = {
@@ -28,6 +35,7 @@ export const PROFILE_FORM_DEFAULTS: ProfileFormInput = {
   birthMonth: "",
   birthDay: "",
   birthYear: "",
+  liftUnit: "lb",
 }
 
 export const BIRTHDAY_FIELDS = ["birthMonth", "birthDay", "birthYear"] as const
@@ -40,6 +48,7 @@ export function createProfileSchema(today: () => Date = () => new Date()) {
       birthMonth: z.string(),
       birthDay: z.string(),
       birthYear: z.string(),
+      liftUnit: z.enum(["lb", "kg"]),
     })
     .transform((raw, ctx): ProfileFormValues => {
       const reader = createFormReader(raw, ctx)
@@ -84,7 +93,7 @@ export function createProfileSchema(today: () => Date = () => new Date()) {
 
       const body = readBodyFields(raw, reader)
       if (!body || !reader.valid) return z.NEVER
-      return { ...body, birthday }
+      return { ...body, birthday, liftUnit: raw.liftUnit }
     })
 }
 

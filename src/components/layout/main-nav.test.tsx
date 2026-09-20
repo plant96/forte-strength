@@ -10,9 +10,9 @@ import { MainNav } from "./main-nav"
  * task. These run on real timers — userEvent deadlocks against Vitest's fake ones —
  * so the assertions poll instead.
  */
-function setup() {
+function setup(unlocked = true) {
   const user = userEvent.setup()
-  render(<MainNav />)
+  render(<MainNav unlocked={unlocked} />)
   return user
 }
 
@@ -136,5 +136,29 @@ describe("MainNav dropdowns", () => {
 
     await closes(resources)
     expect(resources()).not.toHaveAttribute("data-pinned")
+  })
+})
+
+describe("MainNav client-only entries", () => {
+  it("marks a locked entry, and still links to it so the upsell is reachable", async () => {
+    const user = setup(false)
+
+    await user.click(resources())
+    await opens(resources)
+
+    const link = await screen.findByRole("link", { name: /Mobility Vault/ })
+    expect(link).toHaveAttribute("href", "/resources/mobility-vault")
+    expect(link).toHaveAccessibleName(/coaching clients only/i)
+    expect(screen.getByText("Clients")).toBeInTheDocument()
+  })
+
+  it("leaves the entry unmarked for a client", async () => {
+    const user = setup(true)
+
+    await user.click(resources())
+    await opens(resources)
+
+    await screen.findByRole("link", { name: /Mobility Vault/ })
+    expect(screen.queryByText("Clients")).not.toBeInTheDocument()
   })
 })

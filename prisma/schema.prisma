@@ -45,20 +45,27 @@ enum Intensity {
 /// A website account, created from Clerk the first time the person is seen.
 /// Set `role` to ADMIN (e.g. in Prisma Studio) to unlock the admin panel.
 model User {
-  id                  String    @id @default(cuid())
-  clerkId             String    @unique
+  id                  String     @id @default(cuid())
+  clerkId             String     @unique
   email               String
   firstName           String?
   lastName            String?
   imageUrl            String?
-  role                Role      @default(USER)
+  role                Role       @default(USER)
   onboardedAt         DateTime?
   onboardingSkippedAt DateTime?
   /// Set when the coach marks the account as a coaching client; null otherwise.
   clientSince         DateTime?
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
+  /// How they read gym weights (plates, dumbbells, machines). Deliberately separate
+  /// from `Profile.weightUnit`: plenty of lifters compete in kg but train in lb.
+  /// Lives here rather than on Profile so someone who skipped onboarding still has one.
+  liftUnit            WeightUnit @default(LB)
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
   profile             Profile?
+  exercises           Exercise[]
+  prSeries            PrSeries[]
+  prEntries           PrEntry[]
 
   @@index([email])
   @@index([createdAt])
@@ -253,4 +260,76 @@ model PageView {
   @@index([path, createdAt])
   @@index([country, createdAt])
   @@index([referrerHost, createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// PR tracker (coaching clients and admins)
+// ---------------------------------------------------------------------------
+
+enum PrKind {
+  ONE_REP_MAX
+  REP
+  VOLUME
+}
+
+/// A movement someone tracks PRs for. `slug` is the normalised name, so
+/// "Bench Press", "bench  press" and "BENCH-PRESS" can never coexist for one user.
+model Exercise {
+  id        String     @id @default(cuid())
+  userId    String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// As picked from the catalogue or typed, for display.
+  name      String
+  /// Normalised form of `name`, for identity. See `slugify` in the feature's lib.
+  slug      String
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  series    PrSeries[]
+
+  @@unique([userId, slug])
+  @@index([userId, updatedAt])
+}
+
+/// One progression: "bench press 1RM", "bench press 2-rep", "bench press 3x5 volume".
+/// The unique constraint is what makes a duplicate PR type structurally impossible.
+model PrSeries {
+  id         String    @id @default(cuid())
+  exerciseId String
+  exercise   Exercise  @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  /// Denormalised so ownership checks never need a join.
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind       PrKind
+  /// Always 1 for ONE_REP_MAX and REP.
+  sets       Int       @default(1)
+  /// Always 1 for ONE_REP_MAX.
+  reps       Int       @default(1)
+  createdAt  DateTime  @default(now())
+  entries    PrEntry[]
+
+  @@unique([exerciseId, kind, sets, reps])
+  @@index([userId, exerciseId])
+}
+
+/// One dated record on a series.
+///
+/// Weight is stored canonically in kg — unlike `Profile.weight`, which keeps the unit
+/// the user entered. A series is a comparison: the y-axis and the monotonicity check
+/// both need one scale, and mixed units inside a series would silently corrupt both.
+model PrEntry {
+  id         String   @id @default(cuid())
+  seriesId   String
+  series     PrSeries @relation(fields: [seriesId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  weightKg   Float
+  achievedOn DateTime @db.Date
+  /// The admin who logged this for the athlete; null when they logged it themselves.
+  /// A loose reference, not a relation — the badge only needs to know that it happened.
+  loggedById String?
+  createdAt  DateTime @default(now())
+
+  /// One point per date keeps the line clean; a heavier same-day record replaces it.
+  @@unique([seriesId, achievedOn])
+  @@index([seriesId, achievedOn])
 }

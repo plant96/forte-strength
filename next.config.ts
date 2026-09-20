@@ -12,6 +12,12 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
+      // Tools moved under a /tools prefix when the PR tracker joined the calculator.
+      {
+        source: "/tdee-calculator",
+        destination: "/tools/tdee-calculator",
+        permanent: true,
+      },
       // The vault's nav link lands on its first lift.
       {
         source: "/resources/mobility-vault",

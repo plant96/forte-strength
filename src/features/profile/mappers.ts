@@ -30,8 +30,9 @@ export type ProfileRecord = Pick<
 
 const SEX_TO_DB: Record<Sex, DbSex> = { male: "MALE", female: "FEMALE" }
 const SEX_FROM_DB: Record<DbSex, Sex> = { MALE: "male", FEMALE: "female" }
-const WEIGHT_UNIT_TO_DB: Record<WeightUnit, DbWeightUnit> = { lb: "LB", kg: "KG" }
-const WEIGHT_UNIT_FROM_DB: Record<DbWeightUnit, WeightUnit> = { LB: "lb", KG: "kg" }
+/** Shared with the PR tracker, which stores its own gym-weight unit on `User`. */
+export const WEIGHT_UNIT_TO_DB: Record<WeightUnit, DbWeightUnit> = { lb: "LB", kg: "KG" }
+export const WEIGHT_UNIT_FROM_DB: Record<DbWeightUnit, WeightUnit> = { LB: "lb", KG: "kg" }
 const HEIGHT_UNIT_TO_DB: Record<HeightUnit, DbHeightUnit> = { "ft-in": "FT_IN", cm: "CM" }
 const HEIGHT_UNIT_FROM_DB: Record<DbHeightUnit, HeightUnit> = { FT_IN: "ft-in", CM: "cm" }
 const INTENSITY_TO_DB: Record<TrainingIntensityId, DbIntensity> = {
@@ -83,17 +84,21 @@ function bodyFieldsFromRecord(profile: ProfileRecord) {
     steps: String(profile.stepsPerDay),
     sessions: String(profile.sessionsPerWeek),
     intensity: profile.intensity ? INTENSITY_FROM_DB[profile.intensity] : "",
-  } satisfies Omit<ProfileFormInput, "birthMonth" | "birthDay" | "birthYear">
+  } satisfies Omit<ProfileFormInput, "birthMonth" | "birthDay" | "birthYear" | "liftUnit">
 }
 
 /** Database fields → profile form state. */
-export function profileRecordToFormInput(profile: ProfileRecord): ProfileFormInput {
+export function profileRecordToFormInput(
+  profile: ProfileRecord,
+  liftUnit: WeightUnit = "lb",
+): ProfileFormInput {
   const birthday = dateToBirthday(profile.birthDate)
   return {
     ...bodyFieldsFromRecord(profile),
     birthMonth: String(birthday.month),
     birthDay: String(birthday.day),
     birthYear: String(birthday.year),
+    liftUnit,
   }
 }
 

@@ -1,4 +1,11 @@
-import { ArrowLeftIcon, CalendarIcon, HandshakeIcon, MailIcon, UserRoundXIcon } from "lucide-react"
+import {
+  ArrowLeftIcon,
+  CalendarIcon,
+  HandshakeIcon,
+  MailIcon,
+  TrophyIcon,
+  UserRoundXIcon,
+} from "lucide-react"
 import type { Metadata } from "next"
 import Link from "next/link"
 import { notFound } from "next/navigation"
@@ -12,6 +19,7 @@ import {
   RoleBadge,
 } from "@/features/admin/components/user-badges"
 import { UserClientToggle } from "@/features/admin/components/user-client-toggle"
+import { Button } from "@/components/ui/button"
 import { getUserDetail } from "@/features/admin/queries"
 import { ageOn, dateToBirthday, formatBirthday } from "@/features/profile/lib/birthday"
 import { profileRecordToTdeeInput } from "@/features/profile/mappers"
@@ -73,6 +81,12 @@ export default async function AdminUserPage(props: PageProps<"/admin/users/[id]"
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <OnboardingBadge onboardedAt={user.onboardedAt} skippedAt={user.onboardingSkippedAt} />
+          <Button asChild variant="outline" className="h-10">
+            <Link href={`/admin/users/${user.id}/prs`}>
+              <TrophyIcon />
+              View PRs
+            </Link>
+          </Button>
           <UserClientToggle id={user.id} client={Boolean(user.clientSince)} />
         </div>
       </header>

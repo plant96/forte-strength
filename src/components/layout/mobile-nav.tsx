@@ -2,7 +2,7 @@
 
 import { useAuth } from "@clerk/nextjs"
 import { cn } from "cn"
-import { MenuIcon, ShieldCheckIcon, UserRoundIcon } from "lucide-react"
+import { LockIcon, MenuIcon, ShieldCheckIcon, UserRoundIcon } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useState } from "react"
@@ -17,12 +17,12 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
-import { isNavMenu, siteConfig } from "@/config/site"
+import { isNavMenu, LOCKED_NAV_HINT, siteConfig } from "@/config/site"
 
 import { isActivePath, NAV_ICONS } from "./nav-icons"
 
 /** Slide-out navigation for small screens. */
-export function MobileNav({ isAdmin }: { isAdmin: boolean }) {
+export function MobileNav({ isAdmin, unlocked }: { isAdmin: boolean; unlocked: boolean }) {
   const [open, setOpen] = useState(false)
   const pathname = usePathname()
   const { isSignedIn } = useAuth()
@@ -64,15 +64,25 @@ export function MobileNav({ isAdmin }: { isAdmin: boolean }) {
                   </p>
                   {entry.items.map((item) => {
                     const Icon = item.icon ? NAV_ICONS[item.icon] : null
+                    const locked = Boolean(item.locked) && !unlocked
                     return (
                       <Link
                         key={item.href}
                         href={item.href}
                         onClick={close}
-                        className={linkClass(item.href)}
+                        aria-label={locked ? item.title + " \u2014 " + LOCKED_NAV_HINT : undefined}
+                        className={cn(linkClass(item.href), locked && "text-muted-foreground")}
                       >
-                        {Icon && <Icon className="size-4 text-highlight" />}
+                        {Icon && (
+                          <Icon
+                            className={cn(
+                              "size-4",
+                              locked ? "text-muted-foreground" : "text-highlight",
+                            )}
+                          />
+                        )}
                         {item.title}
+                        {locked && <LockIcon className="size-3 shrink-0" aria-hidden />}
                       </Link>
                     )
                   })}

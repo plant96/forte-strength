@@ -57,12 +57,16 @@ export default async function AdminAnalyticsPage(props: PageProps<"/admin/analyt
 
   const [data, log, expired] = await Promise.all([
     getAnalytics(range, includeBots, window),
-    getVisitorLog(range, {
-      page,
-      perPage: LOG_PAGE_SIZE,
-      search: search || undefined,
-      includeBots,
-    }, window),
+    getVisitorLog(
+      range,
+      {
+        page,
+        perPage: LOG_PAGE_SIZE,
+        search: search || undefined,
+        includeBots,
+      },
+      window,
+    ),
     countExpiredPageViews(),
   ])
 
@@ -183,7 +187,10 @@ export default async function AdminAnalyticsPage(props: PageProps<"/admin/analyt
             />
           </Panel>
 
-          <Panel title="Where visitors are" hint="Approximate IP locations · up to 500 places, sized by page views">
+          <Panel
+            title="Where visitors are"
+            hint="Approximate IP locations · up to 500 places, sized by page views"
+          >
             <VisitorMap points={data.mapPoints} />
           </Panel>
 
@@ -198,7 +205,11 @@ export default async function AdminAnalyticsPage(props: PageProps<"/admin/analyt
               <StatBars rows={data.referrers} total={totalViews} />
             </Panel>
             <Panel title="Campaigns" hint="From utm_source on the landing URL">
-              <StatBars rows={data.campaigns} total={totalViews} emptyLabel="No tagged campaigns yet" />
+              <StatBars
+                rows={data.campaigns}
+                total={totalViews}
+                emptyLabel="No tagged campaigns yet"
+              />
             </Panel>
             <Panel title="Countries">
               <StatBars

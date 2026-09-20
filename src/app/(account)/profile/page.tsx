@@ -5,7 +5,11 @@ import Link from "next/link"
 
 import { Button } from "@/components/ui/button"
 import { ProfileForm } from "@/features/profile/components/profile-form"
-import { profileRecordToFormInput, profileRecordToTdeeInput } from "@/features/profile/mappers"
+import {
+  profileRecordToFormInput,
+  profileRecordToTdeeInput,
+  WEIGHT_UNIT_FROM_DB,
+} from "@/features/profile/mappers"
 import { calculateTdee } from "@/features/tdee/lib/tdee"
 import { isAdmin, requireUser, syncCurrentUser } from "@/server/auth"
 
@@ -32,7 +36,11 @@ export default async function ProfilePage() {
       </header>
 
       <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-8">
-        <ProfileForm initialValues={profile ? profileRecordToFormInput(profile) : null} />
+        <ProfileForm
+          initialValues={
+            profile ? profileRecordToFormInput(profile, WEIGHT_UNIT_FROM_DB[user.liftUnit]) : null
+          }
+        />
 
         <aside className="flex flex-col gap-4 lg:sticky lg:top-24">
           <div className="flex flex-col gap-4 rounded-2xl bg-card p-5 ring-1 ring-foreground/10">
@@ -87,7 +95,7 @@ export default async function ProfilePage() {
               </p>
             )}
             <Link
-              href="/tdee-calculator"
+              href="/tools/tdee-calculator"
               className="inline-flex items-center gap-1.5 text-sm font-medium text-highlight hover:underline"
             >
               <CalculatorIcon className="size-4" />

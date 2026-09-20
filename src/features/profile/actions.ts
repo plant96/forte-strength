@@ -6,7 +6,7 @@ import { redirect } from "next/navigation"
 import { requireUser } from "@/server/auth"
 import { db } from "@/server/db"
 
-import { profileValuesToRecord } from "./mappers"
+import { profileValuesToRecord, WEIGHT_UNIT_TO_DB } from "./mappers"
 import { profileFormSchema, type ProfileFormInput } from "./schema"
 
 export type SaveProfileResult =
@@ -37,7 +37,12 @@ export async function saveProfile(input: ProfileFormInput): Promise<SaveProfileR
       }),
       db.user.update({
         where: { id: user.id },
-        data: { onboardedAt: user.onboardedAt ?? new Date() },
+        data: {
+          onboardedAt: user.onboardedAt ?? new Date(),
+          // A preference rather than a body stat, so it lives on the account — someone
+          // who skips onboarding entirely still needs one for the PR tracker.
+          liftUnit: WEIGHT_UNIT_TO_DB[parsed.data.liftUnit],
+        },
       }),
     ])
   } catch (error) {

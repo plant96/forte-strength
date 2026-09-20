@@ -35,6 +35,7 @@ import {
   type ProfileFormValues,
 } from "../schema"
 import { BirthdayField } from "./birthday-field"
+import { LiftUnitField } from "./lift-unit-field"
 
 type ProfileForm = ReturnType<typeof useForm<ProfileFormInput, unknown, ProfileFormValues>>
 
@@ -55,7 +56,7 @@ const STEPS = [
     id: "activity",
     title: "Activity",
     description: "How much you move and how hard you train.",
-    fields: ["steps", "sessions", "intensity"],
+    fields: ["steps", "sessions", "intensity", "liftUnit"],
   },
   { id: "review", title: "Review", description: "Make sure everything looks right.", fields: [] },
 ] as const satisfies ReadonlyArray<{
@@ -104,7 +105,7 @@ export function OnboardingWizard({ firstName }: { firstName: string | null }) {
         toast.success("You're all set", {
           description: "Your tools will fill themselves in from now on.",
         })
-        router.push("/tdee-calculator")
+        router.push("/tools/tdee-calculator")
         return
       }
       if (result.fieldErrors) {
@@ -182,6 +183,7 @@ export function OnboardingWizard({ firstName }: { firstName: string | null }) {
                       <SessionsField form={form} />
                     </div>
                     <IntensityField form={form} />
+                    <LiftUnitField form={form} />
                   </FieldGroup>
                 )}
                 {isReview && <ReviewStep form={form} onEdit={goToStep} />}

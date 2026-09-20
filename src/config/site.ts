@@ -1,11 +1,17 @@
 /** Icons available to nav entries and the vault's lift switcher (mapped to components in the nav UI). */
-export type NavIcon = "calculator" | "vault" | "squat" | "bench" | "deadlift"
+export type NavIcon = "calculator" | "trophy" | "vault" | "squat" | "bench" | "deadlift"
 
 export interface NavLink {
   title: string
   href: string
   description?: string
   icon?: NavIcon
+  /**
+   * Only reachable by coaching clients and admins. The nav dims these and marks them
+   * with a lock; the route itself is gated server-side and renders an upsell instead.
+   * Set per link, not per menu, so an open resource can sit beside a locked one.
+   */
+  locked?: boolean
 }
 
 export interface NavMenu {
@@ -23,9 +29,16 @@ export function isNavMenu(entry: NavEntry): entry is NavMenu {
 export const tools: NavLink[] = [
   {
     title: "TDEE Calculator",
-    href: "/tdee-calculator",
+    href: "/tools/tdee-calculator",
     description: "Maintenance calories, bulk and cut targets, and macros.",
     icon: "calculator",
+  },
+  {
+    title: "PR Tracker",
+    href: "/tools/pr-tracker",
+    description: "Log every personal record and watch the line climb.",
+    icon: "trophy",
+    locked: true,
   },
 ]
 
@@ -42,8 +55,12 @@ export const resources: NavLink[] = [
     href: MOBILITY_VAULT_PATH,
     description: "Mobility, flexibility and warm-up drills for squat, bench and deadlift.",
     icon: "vault",
+    locked: true,
   },
 ]
+
+/** The line shown under a locked nav entry, in place of its description. */
+export const LOCKED_NAV_HINT = "Coaching clients only — apply to unlock"
 
 export const siteConfig = {
   name: "Forte Strength Systems",
@@ -60,7 +77,10 @@ export const siteConfig = {
   cta: { title: "Apply", href: "/application" },
 } as const
 
-/** Every public page linked from the nav, for the sitemap. */
+/**
+ * Every public page linked from the nav, for the sitemap. Locked pages stay in:
+ * they render an indexable preview that sells the coaching application.
+ */
 export function publicNavHrefs() {
   const hrefs = siteConfig.mainNav.flatMap((entry) =>
     isNavMenu(entry) ? entry.items.map((item) => item.href) : [entry.href],

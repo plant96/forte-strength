@@ -28,6 +28,7 @@ import {
   type ProfileFormValues,
 } from "../schema"
 import { BirthdayField } from "./birthday-field"
+import { LiftUnitField } from "./lift-unit-field"
 
 export function ProfileForm({ initialValues }: { initialValues: ProfileFormInput | null }) {
   const form = useForm<ProfileFormInput, unknown, ProfileFormValues>({
@@ -93,6 +94,7 @@ export function ProfileForm({ initialValues }: { initialValues: ProfileFormInput
                 <SessionsField form={form} />
               </div>
               <IntensityField form={form} />
+              <LiftUnitField form={form} />
             </FieldGroup>
           </FieldSet>
         </div>

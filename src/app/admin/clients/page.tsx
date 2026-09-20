@@ -1,4 +1,5 @@
-import { HandshakeIcon, SearchXIcon } from "lucide-react"
+import { HandshakeIcon, SearchXIcon, TrophyIcon } from "lucide-react"
+import Link from "next/link"
 import type { Metadata } from "next"
 
 import { AdminHeader, EmptyState, Pagination } from "@/features/admin/components/admin-ui"
@@ -30,6 +31,19 @@ const COLUMNS: UserColumn[] = [
     ),
   },
   { header: "Role", cell: (user) => <RoleBadge role={user.role} /> },
+  {
+    header: "PRs",
+    // Sits above the row's own link overlay, so it wins the click.
+    cell: (user) => (
+      <Link
+        href={`/admin/users/${user.id}/prs`}
+        className="relative z-10 inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-muted-foreground ring-1 ring-foreground/10 transition-colors hover:bg-primary/15 hover:text-foreground hover:ring-primary/30"
+      >
+        <TrophyIcon className="size-3.5" />
+        View
+      </Link>
+    ),
+  },
 ]
 
 export default async function AdminClientsPage(props: PageProps<"/admin/clients">) {

@@ -6,7 +6,9 @@ powerlifting team. It has:
 - **Landing page** (`/`) about Coach Ty and his coaching, leading to the application.
 - **Coaching application** (`/application`). Saved to the database, emailed to the coach, and
   copied to the applicant.
-- **Free tools** (`/tdee-calculator`), which autofill from a signed-in user's profile.
+- **Tools** (`/tools`): the TDEE calculator, which autofills from a signed-in user's profile,
+  and the PR tracker (`/tools/pr-tracker`), where clients log personal records and watch the
+  line climb.
 - **Resources** (`/resources/mobility-vault`): the mobility, flexibility and warm-up vault, with a
   page per lift.
 - **Website accounts** (Clerk) with onboarding (`/onboarding`) and a profile (`/profile`). These
@@ -15,6 +17,8 @@ powerlifting team. It has:
   clients and edit his coach profile.
 - **Traffic analytics** (`/admin/analytics`) with traffic trends, sources, visitor locations,
   device breakdowns, a searchable visitor log and automatic retention.
+
+Some areas are **client-only** — see [Client-only areas](#client-only-areas).
 
 ## Stack
 
@@ -76,7 +80,7 @@ prisma/                schema.prisma, migrations, seed.ts
 src/
   app/
     (marketing)/       landing page, /application, /gallery, /resources
-    (tools)/           /tdee-calculator
+    tools/             /tools, /tools/tdee-calculator, /tools/pr-tracker
     (account)/         /onboarding, /profile
     (auth)/            Clerk sign-in / sign-up
     admin/             admin panel (own layout)
@@ -91,8 +95,32 @@ src/
 
 ### Adding a tool
 
-Put it in its own `features/<name>/` folder with a route under `src/app/(tools)/`, then add it
+Put it in its own `features/<name>/` folder with a route under `src/app/tools/`, then add it
 to `tools` in `src/config/site.ts`. It shows up in the nav's Tools menu and the sitemap.
+Wrap the page in `ToolShell` (`components/layout/tool-shell.tsx`) for the shared header.
+
+### Client-only areas
+
+The PR tracker and the mobility vault are perks of coaching. Access is
+`User.clientSince != null` **or** `role === "ADMIN"`, checked by `canAccessClientArea` in
+`server/auth.ts`. Mark an entry `locked: true` in `src/config/site.ts` and the nav dims it,
+adds a lock and a "Clients" pill, and swaps its description for an apply prompt.
+
+Gating happens **in the page, not only in its layout**. Next renders page segments
+independently of whether the parent layout includes `children`, so a layout-only check still
+ships the real content in the RSC payload. The pattern is:
+
+```tsx
+// layout.tsx — what the visitor sees
+if (!canAccessClientArea(user)) return <ClientOnlyGate feature="…" signedIn={…} />
+
+// page.tsx — so there is nothing to ship
+if (!(await hasClientAreaAccess())) return null
+```
+
+Server actions and privileged queries re-check for themselves, since they are reachable by
+direct POST. Locked pages stay in the sitemap: they render an indexable preview that sells the
+coaching application rather than redirecting to sign-in.
 
 ### Images
 

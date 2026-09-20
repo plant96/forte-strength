@@ -83,3 +83,36 @@ export async function requireAdmin() {
 export function isAdmin(user: { role: string } | null | undefined) {
   return user?.role === "ADMIN"
 }
+
+/** True once the coach has marked the account as a coaching client. */
+export function isClient(user: { clientSince: Date | null } | null | undefined) {
+  return user?.clientSince != null
+}
+
+/**
+ * Who may use the client-only areas (the PR tracker, the mobility vault): coaching
+ * clients, and admins so the coach can see what their clients see.
+ */
+export function canAccessClientArea(
+  user: { role: string; clientSince: Date | null } | null | undefined,
+) {
+  return isAdmin(user) || isClient(user)
+}
+
+/** Whether the caller may see client-only content at all. */
+export async function hasClientAreaAccess() {
+  return canAccessClientArea(await getCurrentUser())
+}
+
+/**
+ * The signed-in user when they may use client-only areas, otherwise null.
+ *
+ * Pages use this to render an upsell instead of the real content — deliberately not a
+ * redirect, because bouncing a curious visitor to sign-in throws away the pitch. Server
+ * actions and privileged queries call it too: they are reachable by direct POST, so the
+ * page-level gate is never the only barrier.
+ */
+export async function getClientAreaUser() {
+  const user = await getCurrentUser()
+  return canAccessClientArea(user) ? user : null
+}

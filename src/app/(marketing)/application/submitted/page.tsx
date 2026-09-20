@@ -41,7 +41,7 @@ export default async function ApplicationSubmittedPage() {
 
       <div className="grid w-full gap-4 text-left sm:grid-cols-2">
         <Link
-          href="/tdee-calculator"
+          href="/tools/tdee-calculator"
           className="group flex flex-col gap-3 rounded-2xl bg-card p-6 ring-1 ring-foreground/10 transition-colors hover:ring-primary/40"
         >
           <CalculatorIcon className="size-6 text-highlight" aria-hidden="true" />

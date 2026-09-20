@@ -13,7 +13,7 @@ export default function NotFound() {
         That page doesn&apos;t exist, or it hasn&apos;t been built yet.
       </p>
       <Button asChild size="lg" className="mt-2">
-        <Link href="/tdee-calculator">Go to the TDEE calculator</Link>
+        <Link href="/tools/tdee-calculator">Go to the TDEE calculator</Link>
       </Button>
     </div>
   )

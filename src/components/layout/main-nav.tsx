@@ -1,6 +1,7 @@
 "use client"
 
 import { cn } from "cn"
+import { LockIcon } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useRef, useState, type MouseEvent } from "react"
@@ -14,7 +15,7 @@ import {
   NavigationMenuTrigger,
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu"
-import { isNavMenu, siteConfig } from "@/config/site"
+import { isNavMenu, LOCKED_NAV_HINT, siteConfig } from "@/config/site"
 
 import { isActivePath, NAV_ICONS } from "./nav-icons"
 
@@ -35,7 +36,7 @@ function menuValue(title: string) {
  * leave Radix's own hover latches in a stale state. Every genuine dismissal (a second
  * click, Escape, an outside click, choosing a link) drops the pin first.
  */
-export function MainNav() {
+export function MainNav({ unlocked }: { unlocked: boolean }) {
   const pathname = usePathname()
 
   const [openValue, setOpenValue] = useState("")
@@ -128,6 +129,10 @@ export function MainNav() {
                   {entry.items.map((item) => {
                     const Icon = item.icon ? NAV_ICONS[item.icon] : null
                     const active = isActivePath(pathname, item.href)
+                    // Locked entries stay clickable: they lead to a page that explains what
+                    // is behind them and invites an application. Disabling them would be a
+                    // dead end and would lose the pitch.
+                    const locked = Boolean(item.locked) && !unlocked
                     return (
                       <li key={item.href}>
                         {/* Choosing a link dismisses through a DOM event rather than
@@ -136,19 +141,50 @@ export function MainNav() {
                           <Link
                             href={item.href}
                             aria-current={active ? "page" : undefined}
+                            aria-label={
+                              locked ? item.title + " \u2014 " + LOCKED_NAV_HINT : undefined
+                            }
                             className="flex items-start gap-3 rounded-lg p-3"
                           >
                             {Icon && (
-                              <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary/15 text-highlight">
+                              <span
+                                className={cn(
+                                  "grid size-9 shrink-0 place-items-center rounded-lg",
+                                  locked
+                                    ? "bg-muted text-muted-foreground"
+                                    : "bg-primary/15 text-highlight",
+                                )}
+                              >
                                 <Icon className="size-4.5" />
                               </span>
                             )}
                             <span className="flex flex-col gap-0.5">
-                              <span className="font-medium text-foreground">{item.title}</span>
-                              {item.description && (
-                                <span className="text-xs leading-snug text-muted-foreground">
-                                  {item.description}
+                              <span
+                                className={cn(
+                                  "flex items-center gap-1.5 font-medium",
+                                  locked ? "text-muted-foreground" : "text-foreground",
+                                )}
+                              >
+                                {item.title}
+                                {locked && (
+                                  <>
+                                    <LockIcon className="size-3" aria-hidden />
+                                    <span className="rounded-full bg-primary/15 px-1.5 py-px text-[10px] font-semibold tracking-wide text-highlight uppercase ring-1 ring-primary/30">
+                                      Clients
+                                    </span>
+                                  </>
+                                )}
+                              </span>
+                              {locked ? (
+                                <span className="text-xs leading-snug text-highlight/80">
+                                  {LOCKED_NAV_HINT}
                                 </span>
+                              ) : (
+                                item.description && (
+                                  <span className="text-xs leading-snug text-muted-foreground">
+                                    {item.description}
+                                  </span>
+                                )
                               )}
                             </span>
                           </Link>
