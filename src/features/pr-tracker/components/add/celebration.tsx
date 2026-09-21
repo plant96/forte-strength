@@ -125,12 +125,16 @@ export function Celebration({
           {entry && <> Logged for {formatDay(entry.achievedOn)}.</>}
         </p>
         <div className="flex gap-2">
-          <Button variant="outline" className="h-10" asChild>
-            <Link href={`${basePath}/${outcome.exercise.slug}/${outcome.series.key}`}>
-              See every record
-              <ArrowRightIcon />
-            </Link>
-          </Button>
+          {/* With a single record there is nothing else to go and see — it is on the graph
+              right above this, and they just put it there. */}
+          {outcome.series.entries.length > 1 && (
+            <Button variant="outline" className="h-10" asChild>
+              <Link href={`${basePath}/${outcome.exercise.slug}/${outcome.series.key}`}>
+                See every record
+                <ArrowRightIcon />
+              </Link>
+            </Button>
+          )}
           <Button className="h-10" onClick={onLogAnother}>
             <PlusIcon />
             Log another

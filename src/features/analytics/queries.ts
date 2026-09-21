@@ -4,14 +4,15 @@ import { Prisma } from "@/generated/prisma/client"
 import { db } from "@/server/db"
 import { requireAdmin } from "@/server/auth"
 
+import { ADMIN_TIME_ZONE } from "@/lib/dates"
+
 import { LIVE_WINDOW_MINUTES } from "./lib/config"
-import { analyticsTimezone } from "./lib/format"
 
 /**
- * Buckets and hour-of-day are computed in this zone, so "9am" means 9am where
- * the coach is rather than in UTC. Any IANA name works.
+ * Buckets, hour-of-day and log rows are all computed in the coach's zone, so "9am" means
+ * 9am where they are. One zone for the whole panel — see `ADMIN_TIME_ZONE`.
  */
-export const DISPLAY_TIMEZONE = analyticsTimezone(process.env.ANALYTICS_TIMEZONE)
+export const DISPLAY_TIMEZONE = ADMIN_TIME_ZONE
 
 export const RANGES = {
   "24h": { label: "24 hours", hours: 24, unit: "hour", step: "1 hour" },
@@ -341,29 +342,29 @@ export async function getVisitorLog(
   const skip = (page - 1) * perPage
 
   const rows = await db.$queryRaw<
-      {
-        id: string
-        createdAt: Date
-        visitorId: string
-        sessionId: string
-        ipAddress: string | null
-        country: string | null
-        region: string | null
-        city: string | null
-        timezone: string | null
-        path: string
-        referrerHost: string | null
-        browser: string | null
-        os: string | null
-        device: string
-        screenW: number | null
-        screenH: number | null
-        language: string | null
-        durationMs: number | null
-        isBot: boolean
-        userId: string | null
-      }[]
-    >(Prisma.sql`
+    {
+      id: string
+      createdAt: Date
+      visitorId: string
+      sessionId: string
+      ipAddress: string | null
+      country: string | null
+      region: string | null
+      city: string | null
+      timezone: string | null
+      path: string
+      referrerHost: string | null
+      browser: string | null
+      os: string | null
+      device: string
+      screenW: number | null
+      screenH: number | null
+      language: string | null
+      durationMs: number | null
+      isBot: boolean
+      userId: string | null
+    }[]
+  >(Prisma.sql`
       SELECT "id", "createdAt", "visitorId", "sessionId", "ipAddress", "country", "region",
              "city", "timezone", "path", "referrerHost", "browser", "os", "device"::text AS device,
              "screenW", "screenH", "language", "durationMs", "isBot", "userId"

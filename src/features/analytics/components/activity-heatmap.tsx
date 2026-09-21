@@ -1,3 +1,5 @@
+import { formatHour } from "@/lib/dates"
+
 import { full, SCALE, WEEKDAYS } from "../lib/format"
 
 /** Sequential bins: one hue, dimmest to brightest, with an explicit scale legend. */
@@ -39,7 +41,9 @@ export function ActivityHeatmap({
           >
             {WEEKDAYS.map((day, weekday) => (
               <div key={day} role="row" className="flex items-center gap-1">
-                <span role="rowheader" className="w-9 shrink-0 text-[0.7rem] text-muted-foreground">{day}</span>
+                <span role="rowheader" className="w-9 shrink-0 text-[0.7rem] text-muted-foreground">
+                  {day}
+                </span>
                 <div className="flex flex-1 gap-1">
                   {Array.from({ length: 24 }, (_, hour) => {
                     const views = grid.get(`${weekday}-${hour}`) ?? 0
@@ -48,8 +52,8 @@ export function ActivityHeatmap({
                       <div
                         key={hour}
                         role="cell"
-                        aria-label={`${day} ${hour}:00 — ${full.format(views)} view${views === 1 ? "" : "s"}`}
-                        title={`${day} ${hour}:00 — ${full.format(views)} view${views === 1 ? "" : "s"}`}
+                        aria-label={`${day} ${formatHour(hour)} — ${full.format(views)} view${views === 1 ? "" : "s"}`}
+                        title={`${day} ${formatHour(hour)} — ${full.format(views)} view${views === 1 ? "" : "s"}`}
                         className="h-5 flex-1 rounded-[3px] ring-1 ring-foreground/5"
                         style={{ background: background ?? "var(--muted)" }}
                       />
@@ -59,16 +63,18 @@ export function ActivityHeatmap({
               </div>
             ))}
             <div role="row" className="flex items-center gap-1 pt-0.5">
-              <span role="columnheader" className="w-9 shrink-0"><span className="sr-only">Weekday</span></span>
+              <span role="columnheader" className="w-9 shrink-0">
+                <span className="sr-only">Weekday</span>
+              </span>
               <div className="flex flex-1 gap-1">
                 {Array.from({ length: 24 }, (_, hour) => (
                   <span
                     key={hour}
                     role="columnheader"
-                    aria-label={`${hour}:00`}
+                    aria-label={formatHour(hour)}
                     className="flex-1 text-center text-[0.6rem] text-muted-foreground tabular-nums"
                   >
-                    {hour % 6 === 0 ? hour : ""}
+                    {hour % 6 === 0 ? formatHour(hour) : ""}
                   </span>
                 ))}
               </div>

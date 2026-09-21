@@ -16,6 +16,7 @@ import { DeviceDonut } from "@/features/analytics/components/device-donut"
 import { RetentionPanel } from "@/features/analytics/components/retention-panel"
 import { StatBars } from "@/features/analytics/components/stat-bars"
 import { TrafficChart } from "@/features/analytics/components/traffic-chart"
+import { timeZoneLabel } from "@/lib/dates"
 import { VisitorLog } from "@/features/analytics/components/visitor-log"
 import { VisitorMap } from "@/features/analytics/components/visitor-map"
 import {
@@ -86,7 +87,7 @@ export default async function AdminAnalyticsPage(props: PageProps<"/admin/analyt
     <>
       <AdminHeader
         title="Analytics"
-        description={`Traffic for the last ${RANGES[range].label}. Times shown in ${data.timezone}.`}
+        description={`Traffic for the last ${RANGES[range].label}. Times shown in ${timeZoneLabel()}.`}
       >
         <div className="flex flex-wrap items-center gap-2">
           <LiveBadge visitors={data.live.visitors} />

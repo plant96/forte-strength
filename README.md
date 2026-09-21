@@ -14,7 +14,9 @@ powerlifting team. It has:
 - **Website accounts** (Clerk) with onboarding (`/onboarding`) and a profile (`/profile`). These
   are for site users, separate from coaching clients.
 - **Admin panel** (`/admin`) for Coach Ty to review applications, browse users, mark coaching
-  clients and edit his coach profile.
+  clients and edit his coach profile. Every date, time and chart bucket in it is Eastern
+  (`ADMIN_TIME_ZONE` in `src/lib/dates.ts`), on a 12-hour clock, and follows daylight saving
+  automatically because it names the zone rather than an offset.
 - **Traffic analytics** (`/admin/analytics`) with traffic trends, sources, visitor locations,
   device breakdowns, a searchable visitor log and automatic retention.
 
@@ -184,7 +186,6 @@ Configuration is documented in `.env.example`:
 - `ANALYTICS_RETENTION_DAYS`: visit rows, including full IP addresses, expire after 90 days
   by default. Accepts whole days from 1 through 3650; invalid values fall back to 90.
   All charts use the retained history, so a 12-month range cannot recover purged data.
-- `ANALYTICS_TIMEZONE`: IANA timezone for charts and log dates; defaults to `America/New_York`.
 - `ANALYTICS_GEOIP_ENDPOINT`: optional JSON endpoint with an `{ip}` placeholder, such as
   `https://ipapi.co/{ip}/json/`. Hosting location headers are used first. Leave blank for
   headers only; enabling a provider sends visitor IPs to that provider. Local/private IPs

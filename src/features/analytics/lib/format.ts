@@ -23,16 +23,6 @@ export const SCALE = [
 export const compact = new Intl.NumberFormat("en-US", { notation: "compact" })
 export const full = new Intl.NumberFormat("en-US")
 
-/** Keep every chart and visit timestamp in the same configured display zone. */
-export function analyticsTimezone(value: string | undefined) {
-  const timezone = value?.trim() || "UTC"
-  try {
-    return new Intl.DateTimeFormat("en-US", { timeZone: timezone }).resolvedOptions().timeZone
-  } catch {
-    return "UTC"
-  }
-}
-
 export function formatTrafficTime(
   value: string,
   range: "24h" | "7d" | "30d" | "90d" | "12mo",

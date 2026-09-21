@@ -1,6 +1,7 @@
 "use client"
 
 import { cn } from "cn"
+import { AnimatePresence, m } from "motion/react"
 import { useRouter } from "next/navigation"
 import { useEffect, useRef, useState } from "react"
 
@@ -124,19 +125,33 @@ export function AddPanel({ exercises, unit: initialUnit, basePath, athleteId }: 
         </Step>
       )}
 
-      {exercise && shape && (
-        <Step index="03" title="The lift" done={false} ref={entryRef}>
-          <EntryForm
-            exercise={exercise}
-            shape={shape}
-            series={activeSeries}
-            unit={unit}
-            athleteId={athleteId}
-            onLogged={setOutcome}
-            onUnitChange={setUnit}
-          />
-        </Step>
-      )}
+      {/* Choosing a different PR type takes this step away again, and a step vanishing
+          under the viewport snaps the page upward. Collapsing it instead means the scroll
+          position settles rather than jumps — quick enough not to be a wait. */}
+      <AnimatePresence initial={false}>
+        {exercise && shape && (
+          <m.div
+            key="entry"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className="overflow-hidden"
+          >
+            <Step index="03" title="The lift" done={false} ref={entryRef}>
+              <EntryForm
+                exercise={exercise}
+                shape={shape}
+                series={activeSeries}
+                unit={unit}
+                athleteId={athleteId}
+                onLogged={setOutcome}
+                onUnitChange={setUnit}
+              />
+            </Step>
+          </m.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

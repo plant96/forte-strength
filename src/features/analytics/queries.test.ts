@@ -38,7 +38,9 @@ describe("analytics access", () => {
   it("checks admin access before querying sensitive visit data", async () => {
     requireAdmin.mockRejectedValue(new Error("Forbidden"))
     await expect(getAnalytics("30d")).rejects.toThrow("Forbidden")
-    await expect(getVisitorLog("30d", { page: 1, perPage: 25, includeBots: false })).rejects.toThrow("Forbidden")
+    await expect(
+      getVisitorLog("30d", { page: 1, perPage: 25, includeBots: false }),
+    ).rejects.toThrow("Forbidden")
     expect(query).not.toHaveBeenCalled()
   })
 })

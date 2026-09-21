@@ -94,7 +94,9 @@ export function VisitorMap({ points }: { points: MapPoint[] }) {
           {points.map((point) => (
             <li key={`${point.latitude},${point.longitude}`} className="flex justify-between gap-3">
               <span>
-                {[point.city, point.country ? countryName(point.country) : null].filter(Boolean).join(", ") || "Unknown location"}
+                {[point.city, point.country ? countryName(point.country) : null]
+                  .filter(Boolean)
+                  .join(", ") || "Unknown location"}
               </span>
               <span className="shrink-0 tabular-nums">{full.format(point.views)} views</span>
             </li>

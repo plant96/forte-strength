@@ -75,8 +75,10 @@ describe("ActivityHeatmap", () => {
     )
 
     expect(container.querySelectorAll("[title]")).toHaveLength(7 * 24)
-    expect(screen.getByTitle("Mon 9:00 — 12 views")).toBeInTheDocument()
-    expect(screen.getByTitle("Sun 0:00 — 0 views")).toBeInTheDocument()
+    // Clock readings, never a 24-hour count.
+    expect(screen.getByTitle("Mon 9am — 12 views")).toBeInTheDocument()
+    expect(screen.getByTitle("Sun 12am — 0 views")).toBeInTheDocument()
+    expect(screen.getByTitle("Mon 6pm — 0 views")).toBeInTheDocument()
     expect(screen.getByText(/America\/New_York/)).toBeInTheDocument()
     // The legend interleaves swatches between the words, so match loosely.
     expect(screen.getByText(/Less/)).toBeInTheDocument()

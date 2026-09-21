@@ -98,7 +98,9 @@ export function SeriesHero({
         </ul>
         <Button variant="outline" size="sm" className="h-9" asChild>
           <Link href={href}>
-            All {series.entries.length} records
+            {series.entries.length === 1
+              ? "The full record"
+              : `All ${series.entries.length} records`}
             <ArrowRightIcon />
           </Link>
         </Button>

@@ -142,7 +142,8 @@ export function VisitorLog({
                 <div className="flex flex-col">
                   <dt className="text-muted-foreground">Visitor</dt>
                   <dd className="font-mono" title={row.visitorId}>
-                    {shortId(row.visitorId)}{row.isBot ? " · bot" : ""}
+                    {shortId(row.visitorId)}
+                    {row.isBot ? " · bot" : ""}
                   </dd>
                 </div>
                 <div className="flex flex-col">
