@@ -100,7 +100,7 @@ export function Celebration({
 
         {/* Beside the headline while the number fits there, below it only when it does not. */}
         {entry && (
-          <div className="flex-1">
+          <div className="flex-1 text-right">
             <p className="font-heading text-3xl font-bold whitespace-nowrap tabular-nums">
               {settled ? (
                 // Counts up from the record it beat, so the gain is felt rather than read.

@@ -60,12 +60,12 @@ export function SeriesHero({
             only when it truly does not: the block asks for no more width than the number,
             and the two notes under it wrap independently into whatever room is left. */}
         {record && (
-          <div className="flex-1">
+          <div className="flex-1 text-right">
             <p className="font-heading text-4xl font-bold whitespace-nowrap tabular-nums">
               {formatWeightValue(record.weightKg, unit)}
               <span className="ml-1 text-lg font-medium text-muted-foreground">{unit}</span>
             </p>
-            <p className="flex flex-wrap gap-x-1.5 text-xs text-muted-foreground">
+            <p className="flex flex-wrap justify-end gap-x-1.5 text-xs text-muted-foreground">
               <span className="whitespace-nowrap">set {describeDay(record.achievedOn)}</span>
               {gainKg !== null && gainKg > 0 && (
                 <span className="inline-flex items-center gap-0.5 whitespace-nowrap text-chart-4">

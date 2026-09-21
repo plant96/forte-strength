@@ -69,12 +69,12 @@ export function SeriesPage({
         </div>
         {/* Beside the title while the number fits there, below it only when it does not. */}
         {record && (
-          <div className="flex-1">
+          <div className="flex-1 text-right">
             <p className="font-heading text-4xl font-bold whitespace-nowrap tabular-nums">
               {formatWeightValue(record.weightKg, unit)}
               <span className="ml-1 text-lg font-medium text-muted-foreground">{unit}</span>
             </p>
-            <p className="flex flex-wrap gap-x-1.5 text-xs text-muted-foreground">
+            <p className="flex flex-wrap justify-end gap-x-1.5 text-xs text-muted-foreground">
               <span className="whitespace-nowrap">
                 current record · {describeDay(record.achievedOn)}
               </span>
