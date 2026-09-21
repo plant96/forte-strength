@@ -83,7 +83,7 @@ export function Celebration({
       transition={{ type: "spring", stiffness: 260, damping: 26 }}
       className="flex scroll-mt-24 flex-col gap-5 rounded-2xl bg-card p-5 ring-1 ring-primary/30 sm:p-6"
     >
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <div className="flex flex-wrap items-start gap-x-6 gap-y-2">
         <div className="flex items-start gap-3">
           <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary/15 text-highlight">
             {outcome.placement === "first" ? (
@@ -98,9 +98,10 @@ export function Celebration({
           </div>
         </div>
 
+        {/* Beside the headline while the number fits there, below it only when it does not. */}
         {entry && (
-          <div className="shrink-0 sm:text-right">
-            <p className="font-heading text-3xl font-bold tabular-nums">
+          <div className="flex-1">
+            <p className="font-heading text-3xl font-bold whitespace-nowrap tabular-nums">
               {settled ? (
                 // Counts up from the record it beat, so the gain is felt rather than read.
                 <AnimatedNumber

@@ -58,7 +58,7 @@ export function SeriesPage({
         {backLabel}
       </Link>
 
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
+      <header className="flex flex-wrap items-end gap-x-6 gap-y-2">
         <div className="min-w-0">
           <p className="font-heading text-xs font-semibold tracking-[0.18em] text-highlight uppercase">
             {seriesLabel(shape)}
@@ -67,16 +67,19 @@ export function SeriesPage({
             {exercise.name}
           </h1>
         </div>
+        {/* Beside the title while the number fits there, below it only when it does not. */}
         {record && (
-          <div className="shrink-0 sm:text-right">
-            <p className="font-heading text-4xl font-bold tabular-nums">
+          <div className="flex-1">
+            <p className="font-heading text-4xl font-bold whitespace-nowrap tabular-nums">
               {formatWeightValue(record.weightKg, unit)}
               <span className="ml-1 text-lg font-medium text-muted-foreground">{unit}</span>
             </p>
-            <p className="text-xs text-muted-foreground">
-              current record · {describeDay(record.achievedOn)}
+            <p className="flex flex-wrap gap-x-1.5 text-xs text-muted-foreground">
+              <span className="whitespace-nowrap">
+                current record · {describeDay(record.achievedOn)}
+              </span>
               {gainKg !== null && gainKg > 0 && (
-                <span className="ml-1.5 text-chart-4">
+                <span className="whitespace-nowrap text-chart-4">
                   +{formatWeightValue(gainKg, unit)} {unit} since the first
                 </span>
               )}

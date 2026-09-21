@@ -41,7 +41,7 @@ export function SeriesHero({
 
   return (
     <section className="flex flex-col gap-5 rounded-2xl bg-card p-5 ring-1 ring-foreground/10 sm:p-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+      <div className="flex flex-wrap items-start gap-x-6 gap-y-2">
         <div className="min-w-0">
           <p className="font-heading text-xs font-semibold tracking-[0.18em] text-muted-foreground uppercase">
             {fallback ? seriesLabel(series) : "One rep max"}
@@ -56,16 +56,19 @@ export function SeriesHero({
           )}
         </div>
 
+        {/* Sits beside the title whenever the number itself fits there, and drops below it
+            only when it truly does not: the block asks for no more width than the number,
+            and the two notes under it wrap independently into whatever room is left. */}
         {record && (
-          <div className="shrink-0 sm:text-right">
-            <p className="font-heading text-4xl font-bold tabular-nums">
+          <div className="flex-1">
+            <p className="font-heading text-4xl font-bold whitespace-nowrap tabular-nums">
               {formatWeightValue(record.weightKg, unit)}
               <span className="ml-1 text-lg font-medium text-muted-foreground">{unit}</span>
             </p>
-            <p className="text-xs text-muted-foreground">
-              set {describeDay(record.achievedOn)}
+            <p className="flex flex-wrap gap-x-1.5 text-xs text-muted-foreground">
+              <span className="whitespace-nowrap">set {describeDay(record.achievedOn)}</span>
               {gainKg !== null && gainKg > 0 && (
-                <span className="ml-1.5 inline-flex items-center gap-0.5 text-chart-4">
+                <span className="inline-flex items-center gap-0.5 whitespace-nowrap text-chart-4">
                   <TrendingUpIcon className="size-3" />+{formatWeightValue(gainKg, unit)} {unit} all
                   time
                 </span>
