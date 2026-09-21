@@ -8,7 +8,7 @@ import { db } from "@/server/db"
 import type { WeightUnit } from "@/lib/units"
 
 import { EXERCISE_CATALOG, findCatalogEntry } from "./catalog"
-import { dayToDate, formatDay } from "./lib/day"
+import { dayToDate, formatDay } from "@/lib/day"
 import { checkRecord, type RecordPoint } from "./lib/records"
 import { isValidShape, normaliseShape, seriesKey, type SeriesShape } from "./lib/series"
 import { cleanName, matchName, slugify } from "./lib/slug"

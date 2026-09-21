@@ -6,7 +6,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import type { WeightUnit } from "@/lib/units"
 
-import { describeDay, formatDay } from "../../lib/day"
+import { describeDay, formatDay } from "@/lib/day"
 import { currentRecord } from "../../lib/records"
 import { seriesLabel, seriesTitle } from "../../lib/series"
 import { formatWeightValue } from "../../lib/weight"

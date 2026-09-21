@@ -2,7 +2,7 @@ import { DumbbellIcon, TrendingUpIcon, TrophyIcon } from "lucide-react"
 
 import type { WeightUnit } from "@/lib/units"
 
-import { describeDay } from "../lib/day"
+import { describeDay } from "@/lib/day"
 import { formatWeightValue } from "../lib/weight"
 import type { TrackerSummary } from "../queries"
 

@@ -1,4 +1,4 @@
-import type { Day } from "./day"
+import type { Day } from "@/lib/day"
 
 /**
  * A series' line may only ever go up.

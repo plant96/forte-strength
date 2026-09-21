@@ -23,7 +23,7 @@ import type { WeightUnit } from "@/lib/units"
 
 import { createExercise, type CreateExerciseResult } from "../actions"
 import { searchCatalog } from "../catalog"
-import { describeDay } from "../lib/day"
+import { describeDay } from "@/lib/day"
 import { compactName } from "../lib/slug"
 import { formatWeight } from "../lib/weight"
 import type { ExerciseListItem, ExerciseSummary } from "../queries"

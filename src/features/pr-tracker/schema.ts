@@ -2,7 +2,7 @@ import { z } from "zod"
 
 import { createFormReader } from "@/lib/forms/reader"
 
-import { isDay } from "./lib/day"
+import { isDay } from "@/lib/day"
 import { isValidShape, SERIES_LIMITS, type PrKind, type SeriesShape } from "./lib/series"
 import { WEIGHT_LIMITS } from "./lib/weight"
 

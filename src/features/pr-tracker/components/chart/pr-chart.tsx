@@ -6,7 +6,7 @@ import { useEffect, useId, useRef, useState } from "react"
 
 import type { WeightUnit } from "@/lib/units"
 
-import { dayToDate, formatDay, formatDayShort, type Day } from "../../lib/day"
+import { dayToDate, formatDay, formatDayShort, type Day } from "@/lib/day"
 import { extent, niceTicks, padDomain, project, type Domain } from "../../lib/scale"
 import { formatDelta, formatWeightValue, fromKg } from "../../lib/weight"
 import type { EntryView } from "../../queries"

@@ -17,7 +17,7 @@ import {
 import type { WeightUnit } from "@/lib/units"
 
 import { deletePrEntry } from "../../actions"
-import { describeDay, formatDay } from "../../lib/day"
+import { describeDay, formatDay } from "@/lib/day"
 import { formatWeightValue } from "../../lib/weight"
 import type { EntryView } from "../../queries"
 

@@ -7,7 +7,7 @@ import { useState, useTransition } from "react"
 import type { WeightUnit } from "@/lib/units"
 
 import { loadExerciseSeries } from "../../actions"
-import { describeDay } from "../../lib/day"
+import { describeDay } from "@/lib/day"
 import { currentRecord } from "../../lib/records"
 import { KIND_LABELS, shapeChipLabel, type PrKind } from "../../lib/series"
 import { formatWeightValue } from "../../lib/weight"

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 
 import type { WeightUnit } from "@/lib/units"
 
-import { describeDay } from "../../lib/day"
+import { describeDay } from "@/lib/day"
 import { currentRecord } from "../../lib/records"
 import { seriesLabel, seriesTitle, type SeriesShape } from "../../lib/series"
 import { formatWeightValue } from "../../lib/weight"

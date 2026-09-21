@@ -5,13 +5,14 @@ import { Loader2Icon } from "lucide-react"
 import { useState, useTransition } from "react"
 import { toast } from "sonner"
 
+import { DateField } from "@/components/forms/date-field"
 import { Input } from "@/components/ui/input"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { parseNumberInput } from "@/lib/forms/reader"
 import { roundTo, type WeightUnit } from "@/lib/units"
 
 import { addPrEntry, setLiftUnit, type AddEntryOutcome } from "../../actions"
-import { describeDay, formatDay, today } from "../../lib/day"
+import { describeDay, formatDay, isDay, today } from "@/lib/day"
 import { currentRecord } from "../../lib/records"
 import { seriesTitle, type SeriesShape } from "../../lib/series"
 import { formatWeight, fromKg, toKg, WEIGHT_LIMITS } from "../../lib/weight"
@@ -53,6 +54,7 @@ export function EntryForm({
   const typed = parseNumberInput(weight)
   const limits = WEIGHT_LIMITS[unit]
   const inRange = typed !== null && typed >= limits.min && typed <= limits.max
+  const dayChosen = isDay(day)
   const gainKg = inRange && record ? toKg(typed, unit) - record.weightKg : null
 
   function changeUnit(next: WeightUnit) {
@@ -72,6 +74,10 @@ export function EntryForm({
   function submit() {
     if (typed === null) {
       setError({ field: "weight", message: "Enter the weight you lifted" })
+      return
+    }
+    if (!isDay(day)) {
+      setError({ field: "achievedOn", message: "Pick the day you hit it" })
       return
     }
     setError(null)
@@ -152,17 +158,15 @@ export function EntryForm({
           <label htmlFor="pr-day" className="text-sm font-medium">
             Date
           </label>
-          <Input
+          <DateField
             id="pr-day"
-            type="date"
             value={day}
             max={today()}
-            onChange={(event) => {
-              setDay(event.target.value)
+            onChange={(next) => {
+              setDay(next)
               setError(null)
             }}
-            aria-invalid={error?.field === "achievedOn" || undefined}
-            className="h-12 text-base"
+            invalid={error?.field === "achievedOn"}
           />
         </div>
       </div>
@@ -190,7 +194,7 @@ export function EntryForm({
       <button
         type="button"
         onClick={submit}
-        disabled={pending || !inRange}
+        disabled={pending || !inRange || !dayChosen}
         className={cn(
           "flex h-12 items-center justify-center gap-2 rounded-lg bg-primary font-heading text-sm font-semibold tracking-wider text-primary-foreground uppercase transition-all",
           "hover:bg-primary/85 disabled:pointer-events-none disabled:opacity-45",
@@ -200,7 +204,7 @@ export function EntryForm({
         {buttonLabel}
       </button>
 
-      {day !== today() && (
+      {dayChosen && day !== today() && (
         <p className="text-xs text-muted-foreground">
           Logging for {formatDay(day)}. A back-dated record still has to keep the line climbing —
           heavier than the one before it, lighter than the one after.

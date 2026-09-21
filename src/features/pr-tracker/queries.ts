@@ -7,7 +7,7 @@ import type { Prisma } from "@/generated/prisma/client"
 import { db } from "@/server/db"
 import type { WeightUnit } from "@/lib/units"
 
-import { toDay, type Day } from "./lib/day"
+import { toDay, type Day } from "@/lib/day"
 import { currentRecord } from "./lib/records"
 import { seriesKey, type PrKind, type SeriesShape } from "./lib/series"
 import { PR_KIND_FROM_DB, PR_KIND_TO_DB } from "./mappers"

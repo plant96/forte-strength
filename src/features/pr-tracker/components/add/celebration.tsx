@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button"
 import type { WeightUnit } from "@/lib/units"
 
 import type { AddEntryOutcome } from "../../actions"
-import { formatDay } from "../../lib/day"
+import { formatDay } from "@/lib/day"
 import { seriesTitle } from "../../lib/series"
 import { formatWeightValue, fromKg } from "../../lib/weight"
 import { PrChart } from "../chart/pr-chart"
