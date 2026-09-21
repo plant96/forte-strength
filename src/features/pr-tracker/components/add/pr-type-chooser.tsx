@@ -63,8 +63,12 @@ export function PrTypeChooser({ series, unit, value, onChange }: PrTypeChooserPr
           <div
             key={kind}
             className={cn(
-              "flex flex-col gap-3 rounded-xl bg-card p-4 ring-1 transition-colors",
-              selected ? "ring-2 ring-primary" : open ? "ring-primary/40" : "ring-foreground/10",
+              "relative flex flex-col gap-3 rounded-xl bg-card p-4 ring-1 transition-colors",
+              selected
+                ? "ring-2 ring-primary/70"
+                : open
+                  ? "ring-primary/40"
+                  : "ring-foreground/10 hover:ring-foreground/20",
             )}
           >
             <button
@@ -76,12 +80,16 @@ export function PrTypeChooser({ series, unit, value, onChange }: PrTypeChooserPr
                   setBuilding(null)
                   return
                 }
-                // Moving to a kind that still needs a rep scheme drops the current choice,
-                // so the highlighted card is never a different one from the card in use.
-                onChange(null)
+                // Arriving from another kind drops that choice, so the highlighted card is
+                // never a different one from the card in use. Clicking the card that is
+                // already chosen only opens the stepper — losing a pick to a stray click on
+                // your own selection would be its own bug.
+                if (!selected) onChange(null)
                 setBuilding((current) => (current === kind ? null : kind))
               }}
-              className="flex flex-col gap-1 text-left"
+              // The hit area is the whole card, not just this header: the padding and the
+              // space beside the badge are the easiest parts of a card to aim at.
+              className="flex flex-col gap-1 text-left after:absolute after:inset-0 after:rounded-xl after:content-['']"
             >
               <span className="flex items-center gap-2">
                 <span
@@ -107,7 +115,7 @@ export function PrTypeChooser({ series, unit, value, onChange }: PrTypeChooserPr
             {selected && value && <SelectedBanner shape={value} />}
 
             {existing.length > 0 && (
-              <div className="flex flex-col gap-1.5">
+              <div className="relative z-10 flex flex-col gap-1.5">
                 <p className="text-[11px] tracking-wide text-muted-foreground uppercase">
                   Already tracked
                 </p>
@@ -151,7 +159,7 @@ export function PrTypeChooser({ series, unit, value, onChange }: PrTypeChooserPr
                     onChange(null)
                     setBuilding(kind)
                   }}
-                  className="self-start text-xs font-medium text-highlight hover:underline"
+                  className="relative z-10 self-start text-xs font-medium text-highlight hover:underline"
                 >
                   {kind === "volume"
                     ? existing.length > 0
@@ -165,7 +173,7 @@ export function PrTypeChooser({ series, unit, value, onChange }: PrTypeChooserPr
                 <m.div
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: "auto" }}
-                  className="flex flex-col gap-2 overflow-hidden"
+                  className="relative z-10 flex flex-col gap-2 overflow-hidden"
                 >
                   {kind === "volume" && (
                     <Stepper
@@ -206,9 +214,9 @@ export function PrTypeChooser({ series, unit, value, onChange }: PrTypeChooserPr
 }
 
 /**
- * What you picked, stated plainly. Deliberately the loudest thing in the card — the
- * "already tracked" chips beneath it are history, and at a glance a lone chip reads like a
- * selection when nothing else claims to be one.
+ * What you picked, stated plainly. It has to beat the "already tracked" chips below it,
+ * which at a glance read like a selection when nothing else claims to be one — so it wins
+ * on size and weight rather than on a slab of colour.
  */
 function SelectedBanner({ shape }: { shape: SeriesShape }) {
   return (
@@ -216,13 +224,15 @@ function SelectedBanner({ shape }: { shape: SeriesShape }) {
       initial={{ opacity: 0, scale: 0.96 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ type: "spring", stiffness: 420, damping: 24 }}
-      className="flex items-center gap-2.5 rounded-lg bg-primary px-3 py-2.5 text-primary-foreground"
+      className="flex items-center gap-2.5 rounded-lg bg-primary/12 px-3 py-2.5 ring-1 ring-primary/40"
     >
-      <CheckIcon className="size-4 shrink-0" />
-      <span className="font-heading text-lg leading-none font-bold tracking-wide uppercase">
+      <CheckIcon className="size-4 shrink-0 text-highlight" />
+      <span className="font-heading text-lg leading-none font-bold tracking-wide text-foreground uppercase">
         {shapeChipLabel(shape)}
       </span>
-      <span className="ml-auto text-[11px] tracking-wide uppercase opacity-80">Selected</span>
+      <span className="ml-auto text-[11px] tracking-wide text-muted-foreground uppercase">
+        Selected
+      </span>
     </m.div>
   )
 }

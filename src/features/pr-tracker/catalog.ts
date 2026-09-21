@@ -29,15 +29,10 @@ function lift(name: string, group: MuscleGroup, ...aliases: string[]): CatalogEn
 
 export const EXERCISE_CATALOG: CatalogEntry[] = [
   // Squat
-  lift(
-    "Back Squat",
-    "squat",
-    "squat",
-    "comp squat",
-    "competition squat",
-    "low bar squat",
-    "high bar squat",
-  ),
+  // Both exist on purpose: plenty of people just write "squat" and mean it literally,
+  // and forcing them onto "Back Squat" makes the name feel like someone else's.
+  lift("Squat", "squat", "comp squat", "competition squat"),
+  lift("Back Squat", "squat", "low bar squat", "high bar squat"),
   lift("Front Squat", "squat", "front squat"),
   lift("Paused Squat", "squat", "pause squat"),
   lift("Box Squat", "squat"),
@@ -191,8 +186,27 @@ export function findCatalogEntry(name: string) {
 }
 
 /**
+ * The lifts someone means first when they type a general word. Without this, "squat" ranks
+ * Box Squat above Back Squat purely because the name is shorter.
+ */
+const COMMON = new Set([
+  "squat",
+  "back-squat",
+  "front-squat",
+  "bench-press",
+  "incline-bench-press",
+  "close-grip-bench-press",
+  "deadlift",
+  "sumo-deadlift",
+  "romanian-deadlift",
+  "overhead-press",
+  "barbell-row",
+  "pull-up",
+])
+
+/**
  * Catalogue search. Matches names and hidden aliases, ranking a prefix hit above a
- * mid-string one so "ben" puts Bench Press first.
+ * mid-string one so "ben" puts Bench Press first, and a staple above an obscure variation.
  */
 export function searchCatalog(query: string, limit = 8) {
   const needle = compactName(query)
@@ -210,7 +224,12 @@ export function searchCatalog(query: string, limit = 8) {
   }
 
   return scored
-    .sort((a, b) => a.score - b.score || a.entry.name.length - b.entry.name.length)
+    .sort(
+      (a, b) =>
+        a.score - b.score ||
+        Number(COMMON.has(b.entry.slug)) - Number(COMMON.has(a.entry.slug)) ||
+        a.entry.name.length - b.entry.name.length,
+    )
     .slice(0, limit)
     .map((hit) => hit.entry)
 }

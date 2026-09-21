@@ -1,7 +1,7 @@
 "use client"
 
 import { cn } from "cn"
-import { animate, m } from "motion/react"
+import { animate, m, useReducedMotion } from "motion/react"
 import { useEffect, useId, useRef, useState } from "react"
 
 import type { WeightUnit } from "@/lib/units"
@@ -54,6 +54,9 @@ interface Point {
 const PAD = { top: 30, right: 22, bottom: 26, left: 46 }
 const SPARK_PAD = { top: 6, right: 6, bottom: 6, left: 6 }
 
+/** How long the line takes to draw itself when a chart first appears. */
+const INTRO_DRAW = 0.8
+
 function lerp(a: number, b: number, t: number) {
   return a + (b - a) * t
 }
@@ -102,6 +105,15 @@ export function PrChart({
   const gradientId = useId()
   const [containerRef, width] = useMeasuredWidth()
   const newDotRef = useRef<SVGGElement>(null)
+  const reduceMotion = useReducedMotion()
+
+  /**
+   * A chart that is only being read still draws itself in rather than snapping into place:
+   * the line is a story about getting stronger, and watching it arrive says so. This is the
+   * quiet version — no domain growth, no particles. A celebration owns the whole sequence
+   * itself, and a sparkline is too small for the movement to read as anything but noise.
+   */
+  const intro = !celebrate && !spark && !reduceMotion
 
   // `grow` drives the domain interpolation, so the axis, the grid and every existing mark
   // move together. It starts at 0 only when there is a previous state to grow out of.
@@ -289,7 +301,7 @@ export function PrChart({
           </defs>
 
           {!spark && (
-            <g>
+            <m.g initial={intro ? { opacity: 0 } : false} animate={{ opacity: 1 }}>
               {yTicks.map((tick) => {
                 const y = pad.top + project(tick, yDomain, [plotHeight, 0])
                 return (
@@ -316,13 +328,15 @@ export function PrChart({
                   </g>
                 )
               })}
-            </g>
+            </m.g>
           )}
 
           {!spark &&
             xTicks.map((day) => (
-              <text
+              <m.text
                 key={day}
+                initial={intro ? { opacity: 0 } : false}
+                animate={{ opacity: 1 }}
                 x={pad.left + project(timeOf(day), xDomain, [0, plotWidth])}
                 y={height - 8}
                 textAnchor="middle"
@@ -330,18 +344,22 @@ export function PrChart({
                 style={{ fontSize: 11 }}
               >
                 {formatDayShort(day)}
-              </text>
+              </m.text>
             ))}
 
           {points.length > 1 && (
             <>
-              <path
+              {/* The fill arrives behind the line rather than racing it. */}
+              <m.path
                 d={`${pathFrom(points)} L${points.at(-1)!.x} ${pad.top + plotHeight} L${points[0].x} ${pad.top + plotHeight} Z`}
                 fill={`url(#${gradientId}-area)`}
+                initial={intro ? { opacity: 0 } : false}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.5, delay: INTRO_DRAW * 0.45 }}
               />
               {/* A blurred copy under the line does the glow; a filter on the line itself
                   would soften the stroke it is meant to make brighter. */}
-              <path
+              <m.path
                 d={pathFrom(points)}
                 fill="none"
                 stroke="var(--highlight)"
@@ -350,14 +368,20 @@ export function PrChart({
                 strokeLinejoin="round"
                 opacity={0.35}
                 style={{ filter: "blur(7px)" }}
+                initial={intro ? { pathLength: 0 } : false}
+                animate={{ pathLength: 1 }}
+                transition={{ duration: INTRO_DRAW, ease: "easeInOut" }}
               />
-              <path
+              <m.path
                 d={pathFrom(points)}
                 fill="none"
                 stroke={`url(#${gradientId}-line)`}
                 strokeWidth={spark ? 2 : 2.5}
                 strokeLinecap="round"
                 strokeLinejoin="round"
+                initial={intro ? { pathLength: 0 } : false}
+                animate={{ pathLength: 1 }}
+                transition={{ duration: INTRO_DRAW, ease: "easeInOut" }}
               />
             </>
           )}
@@ -377,18 +401,29 @@ export function PrChart({
             />
           )}
 
-          {points.map((point) => {
+          {points.map((point, index) => {
             const isLatest = point.entry.id === latest?.entry.id
             if (celebrate && point.entry.id === celebrate.entryId) return null
+            const radius = spark ? 2.5 : 4.5
             return (
-              <circle
+              <m.circle
                 key={point.entry.id}
                 cx={point.x}
                 cy={point.y}
-                r={spark ? 2.5 : 4.5}
                 fill="var(--card)"
                 stroke={isLatest ? "var(--chart-4)" : "var(--highlight)"}
                 strokeWidth={2}
+                // Radius, not scale: an SVG transform resolves against the viewport, which
+                // would pop the dot somewhere other than its own point.
+                initial={intro ? { r: 0 } : false}
+                animate={{ r: radius }}
+                transition={{
+                  type: "spring",
+                  stiffness: 500,
+                  damping: 22,
+                  // Each dot arrives as the line passes it.
+                  delay: points.length > 1 ? (index / (points.length - 1)) * INTRO_DRAW : 0,
+                }}
               />
             )
           })}
@@ -424,15 +459,18 @@ export function PrChart({
 
           {/* One direct label, on the record that matters. Never a number on every point. */}
           {!spark && latest && settled && (
-            <text
+            <m.text
               x={Math.min(latest.x, width - pad.right)}
               y={latest.y - 14}
               textAnchor={latest.x > width - pad.right - 40 ? "end" : "middle"}
               className="fill-foreground font-medium"
               style={{ fontSize: 12 }}
+              initial={intro ? { opacity: 0 } : false}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3, delay: INTRO_DRAW }}
             >
               {formatWeightValue(latest.entry.weightKg, unit)} {unit}
-            </text>
+            </m.text>
           )}
 
           {hoveredPoint && !spark && settled && (
