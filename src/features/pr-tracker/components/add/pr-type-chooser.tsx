@@ -80,12 +80,14 @@ export function PrTypeChooser({ series, unit, value, onChange }: PrTypeChooserPr
                   setBuilding(null)
                   return
                 }
+                // Already configuring this kind: the click lands somewhere in the open
+                // stepper, so leave it alone. Collapsing on a near-miss of the -/+ buttons
+                // would be worse than doing nothing.
+                if (open) return
                 // Arriving from another kind drops that choice, so the highlighted card is
-                // never a different one from the card in use. Clicking the card that is
-                // already chosen only opens the stepper — losing a pick to a stray click on
-                // your own selection would be its own bug.
+                // never a different one from the card in use.
                 if (!selected) onChange(null)
-                setBuilding((current) => (current === kind ? null : kind))
+                setBuilding(kind)
               }}
               // The hit area is the whole card, not just this header: the padding and the
               // space beside the badge are the easiest parts of a card to aim at.
@@ -115,7 +117,9 @@ export function PrTypeChooser({ series, unit, value, onChange }: PrTypeChooserPr
             {selected && value && <SelectedBanner shape={value} />}
 
             {existing.length > 0 && (
-              <div className="relative z-10 flex flex-col gap-1.5">
+              // Only the chips take clicks; the label and the gaps around them stay
+              // transparent so the card's own hit area still reaches through.
+              <div className="pointer-events-none relative z-10 flex flex-col gap-1.5">
                 <p className="text-[11px] tracking-wide text-muted-foreground uppercase">
                   Already tracked
                 </p>
@@ -132,7 +136,7 @@ export function PrTypeChooser({ series, unit, value, onChange }: PrTypeChooserPr
                           setBuilding(null)
                         }}
                         className={cn(
-                          "rounded-full px-2.5 py-1 text-xs font-medium ring-1 transition-colors",
+                          "pointer-events-auto rounded-full px-2.5 py-1 text-xs font-medium ring-1 transition-colors",
                           active
                             ? "bg-primary/20 text-foreground ring-primary/50"
                             : "bg-muted/60 text-muted-foreground ring-foreground/10 hover:text-foreground",
@@ -173,7 +177,7 @@ export function PrTypeChooser({ series, unit, value, onChange }: PrTypeChooserPr
                 <m.div
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: "auto" }}
-                  className="relative z-10 flex flex-col gap-2 overflow-hidden"
+                  className="pointer-events-none relative z-10 flex flex-col gap-2 overflow-hidden"
                 >
                   {kind === "volume" && (
                     <Stepper
@@ -266,7 +270,7 @@ function ConfirmButton({
     <button
       type="button"
       onClick={() => onChange(shape)}
-      className="rounded-lg bg-primary/15 px-3 py-2 text-xs font-medium text-foreground ring-1 ring-primary/30 transition-colors hover:bg-primary/25"
+      className="pointer-events-auto rounded-lg bg-primary/15 px-3 py-2 text-xs font-medium text-foreground ring-1 ring-primary/30 transition-colors hover:bg-primary/25"
     >
       {duplicate
         ? `Choose ${shapeChipLabel(shape)} · already tracked`
@@ -329,7 +333,7 @@ function StepButton({
       aria-label={label}
       disabled={disabled}
       onClick={onClick}
-      className="grid size-7 place-items-center rounded-md bg-muted/60 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-40"
+      className="pointer-events-auto grid size-7 place-items-center rounded-md bg-muted/60 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-40"
     >
       {children}
     </button>

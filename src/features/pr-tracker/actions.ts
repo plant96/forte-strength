@@ -366,10 +366,24 @@ export async function deletePrEntry(input: {
 
     await db.$transaction(async (tx) => {
       await tx.prEntry.delete({ where: { id: entry.id } })
+
       // A PR type with no records left is clutter in every picker and column, so it goes
-      // with its last entry. The movement itself stays — they may well log it again.
-      const remaining = await tx.prEntry.count({ where: { seriesId: entry.seriesId } })
-      if (remaining === 0) await tx.prSeries.delete({ where: { id: entry.seriesId } })
+      // with its last entry — and a movement whose last PR type just went is a movement
+      // with no history at all, so that goes too. Deleting the final record of a lift
+      // should leave no trace of it, not an empty shell to scroll past.
+      const remainingEntries = await tx.prEntry.count({ where: { seriesId: entry.seriesId } })
+      if (remainingEntries > 0) return
+
+      const series = await tx.prSeries.delete({
+        where: { id: entry.seriesId },
+        select: { exerciseId: true },
+      })
+      const remainingSeries = await tx.prSeries.count({
+        where: { exerciseId: series.exerciseId },
+      })
+      if (remainingSeries === 0) {
+        await tx.exercise.delete({ where: { id: series.exerciseId } })
+      }
     })
 
     revalidateFor(actor)
@@ -378,6 +392,40 @@ export async function deletePrEntry(input: {
     console.error("[pr-tracker] Could not delete the record:", error)
     return { ok: false, message: "Couldn't remove that record. Try again." }
   }
+}
+
+/**
+ * Drops a movement that never got a record.
+ *
+ * The movement row is created the moment it is picked, because the steps after it need
+ * something to hang a record on. Backing out of those steps would otherwise leave an empty
+ * lift behind forever. Only ever deletes when there is nothing to lose: a movement with any
+ * history is left alone, so this is safe to call on every cancel.
+ */
+export async function discardEmptyExercise(input: {
+  exerciseId: string
+  athleteId?: string
+}): Promise<ActionResult> {
+  const actor = await resolveActor(input.athleteId)
+  if (!actor) return { ok: false, message: DENIED }
+
+  try {
+    const exercise = await db.exercise.findFirst({
+      where: { id: input.exerciseId, userId: actor.athleteId },
+      select: { id: true, _count: { select: { series: true } } },
+    })
+    if (!exercise || exercise._count.series > 0) return { ok: true }
+
+    await db.exercise.delete({ where: { id: exercise.id } })
+  } catch (error) {
+    // Nothing the lifter did failed, so this stays quiet — the movement is empty either
+    // way, and the View panel hides empty movements regardless.
+    console.error("[pr-tracker] Could not discard the empty movement:", error)
+    return { ok: true }
+  }
+
+  revalidateFor(actor)
+  return { ok: true }
 }
 
 /** The lifter's own gym-weight preference. Admins change their own, never a client's. */

@@ -39,7 +39,7 @@ export function SummaryStrip({ summary, unit }: { summary: TrackerSummary; unit:
         </div>
       ))}
       {summary.lastDay && (
-        <p className="col-span-3 bg-card px-4 pb-3 text-xs text-muted-foreground">
+        <p className="col-span-3 bg-card px-4 pt-3 pb-3 text-xs text-muted-foreground">
           Last record {describeDay(summary.lastDay)}.
         </p>
       )}

@@ -57,6 +57,13 @@ const SPARK_PAD = { top: 6, right: 6, bottom: 6, left: 6 }
 /** How long the line takes to draw itself when a chart first appears. */
 const INTRO_DRAW = 0.8
 
+/**
+ * How near a tap has to land to count as picking that record. Generous, because a finger
+ * is wider than an 8px dot — but not so generous that a tap meant to dismiss picks
+ * something instead.
+ */
+const TAP_RADIUS = 34
+
 function lerp(a: number, b: number, t: number) {
   return a + (b - a) * t
 }
@@ -120,6 +127,10 @@ export function PrChart({
   const [grow, setGrow] = useState(celebrate && celebrate.placement !== "first" ? 0 : 1)
   const [phase, setPhase] = useState<Phase>(celebrate ? "grow" : "done")
   const [hovered, setHovered] = useState<number | null>(null)
+  // Tapped open, and stays open. Touch has no hover, so the tooltip needs a way to be
+  // asked for; pinning also helps on a mouse when you want to read a point without
+  // holding the cursor perfectly still.
+  const [pinned, setPinned] = useState<number | null>(null)
 
   // Records can share a day, and the order within that day is the order they were logged.
   // Returning 0 for equal days keeps the sort stable so that order survives.
@@ -252,7 +263,41 @@ export function PrChart({
       ? `${sorted.length} records, from ${formatWeightValue(sorted[0].weightKg, unit)} to ${formatWeightValue(sorted.at(-1)!.weightKg, unit)} ${unit}`
       : "No records yet")
 
-  const hoveredPoint = hovered !== null ? allPoints[hovered] : null
+  const activeIndex = pinned ?? hovered
+  const activePoint = activeIndex !== null ? (allPoints[activeIndex] ?? null) : null
+
+  // A pinned tooltip closes on the next click anywhere outside the chart.
+  useEffect(() => {
+    if (pinned === null) return
+    function dismiss(event: PointerEvent) {
+      if (!containerRef.current?.contains(event.target as Node)) setPinned(null)
+    }
+    document.addEventListener("pointerdown", dismiss)
+    return () => document.removeEventListener("pointerdown", dismiss)
+  }, [pinned, containerRef])
+
+  /** The record nearest a pointer event, with how far away it actually is in pixels. */
+  function nearestTo(event: React.PointerEvent | React.MouseEvent) {
+    if (spark || !plotWidth || !settled || allPoints.length === 0) return null
+    const box = event.currentTarget.getBoundingClientRect()
+    const x = event.clientX - box.left
+    const y = event.clientY - box.top
+
+    let index = 0
+    let best = Infinity
+    for (const [candidate, point] of allPoints.entries()) {
+      // Weighted towards x, so sweeping across the plot still tracks the line — but y
+      // breaks the tie between two records stacked on the same day.
+      const distance = Math.abs(point.x - x) * 3 + Math.abs(point.y - y)
+      if (distance < best) {
+        best = distance
+        index = candidate
+      }
+    }
+
+    const point = allPoints[index]
+    return { index, pixels: Math.hypot(point.x - x, point.y - y) }
+  }
 
   return (
     <div
@@ -261,22 +306,19 @@ export function PrChart({
       style={{ height }}
       onPointerLeave={() => setHovered(null)}
       onPointerMove={(event) => {
-        if (spark || !plotWidth || !settled) return
-        const box = event.currentTarget.getBoundingClientRect()
-        const x = event.clientX - box.left
-        const y = event.clientY - box.top
-        let nearest = 0
-        let best = Infinity
-        for (const [index, point] of allPoints.entries()) {
-          // Weighted towards x, so sweeping across the plot still tracks the line — but
-          // y breaks the tie between two records stacked on the same day.
-          const distance = Math.abs(point.x - x) * 3 + Math.abs(point.y - y)
-          if (distance < best) {
-            best = distance
-            nearest = index
-          }
+        // Touch reports a move on every tap; only a real cursor should drive hover.
+        if (event.pointerType !== "mouse" || pinned !== null) return
+        const found = nearestTo(event)
+        if (found) setHovered(found.index)
+      }}
+      onClick={(event) => {
+        const found = nearestTo(event)
+        // Far from every record, so this is a dismiss rather than a selection.
+        if (!found || found.pixels > TAP_RADIUS) {
+          setPinned(null)
+          return
         }
-        setHovered(nearest)
+        setPinned((current) => (current === found.index ? null : found.index))
       }}
     >
       {width > 0 && (
@@ -473,11 +515,11 @@ export function PrChart({
             </m.text>
           )}
 
-          {hoveredPoint && !spark && settled && (
+          {activePoint && !spark && settled && (
             <g pointerEvents="none">
               <line
-                x1={hoveredPoint.x}
-                x2={hoveredPoint.x}
+                x1={activePoint.x}
+                x2={activePoint.x}
                 y1={pad.top}
                 y2={pad.top + plotHeight}
                 stroke="var(--muted-foreground)"
@@ -485,8 +527,8 @@ export function PrChart({
                 opacity={0.5}
               />
               <circle
-                cx={hoveredPoint.x}
-                cy={hoveredPoint.y}
+                cx={activePoint.x}
+                cy={activePoint.y}
                 r={6}
                 fill="var(--highlight)"
                 stroke="var(--background)"
@@ -497,10 +539,10 @@ export function PrChart({
         </svg>
       )}
 
-      {hoveredPoint && !spark && settled && (
+      {activePoint && !spark && settled && (
         <Tooltip
-          point={hoveredPoint}
-          index={hovered!}
+          point={activePoint}
+          index={activeIndex!}
           points={allPoints}
           unit={unit}
           width={width}

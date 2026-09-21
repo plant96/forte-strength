@@ -1,13 +1,11 @@
-import { cn } from "cn"
-import { ArrowLeftIcon, ListIcon, PlusIcon } from "lucide-react"
+import { ArrowLeftIcon } from "lucide-react"
 import type { Metadata } from "next"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 
 import { getUserDetail } from "@/features/admin/queries"
-import { AddPanel } from "@/features/pr-tracker/components/add/add-panel"
+import { PrTrackerPanels, type Panel } from "@/features/pr-tracker/components/pr-tracker-panels"
 import { SummaryStrip } from "@/features/pr-tracker/components/summary-strip"
-import { ViewPanel } from "@/features/pr-tracker/components/view/view-panel"
 import { getLiftUnit, getTrackerSummary, listExercises } from "@/features/pr-tracker/queries"
 import { requireAdmin } from "@/server/auth"
 
@@ -39,7 +37,7 @@ export default async function AdminClientPrsPage(props: Props) {
     getTrackerSummary(user.id),
   ])
 
-  const active = panel === "add" ? "add" : "view"
+  const active: Panel = panel === "add" ? "add" : "view"
   const basePath = `/admin/users/${user.id}/prs`
   const name = displayName(user)
 
@@ -62,40 +60,15 @@ export default async function AdminClientPrsPage(props: Props) {
         </p>
       </div>
 
-      <nav
-        aria-label="PR tracker mode"
-        className="grid w-fit grid-cols-2 gap-1.5 rounded-xl bg-card p-1.5 ring-1 ring-foreground/10"
-      >
-        {(
-          [
-            { key: "view", label: "View PRs", icon: ListIcon },
-            { key: "add", label: "Log a PR", icon: PlusIcon },
-          ] as const
-        ).map((option) => (
-          <Link
-            key={option.key}
-            href={`${basePath}?panel=${option.key}`}
-            aria-current={active === option.key ? "page" : undefined}
-            className={cn(
-              "flex items-center justify-center gap-2 rounded-lg px-5 py-2.5 font-heading text-sm font-semibold tracking-wider uppercase transition-colors",
-              active === option.key
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
-            )}
-          >
-            <option.icon className="size-4" />
-            {option.label}
-          </Link>
-        ))}
-      </nav>
-
-      {summary.recordCount > 0 && <SummaryStrip summary={summary} unit={unit} />}
-
-      {active === "add" ? (
-        <AddPanel exercises={exercises} unit={unit} basePath={basePath} athleteId={user.id} />
-      ) : (
-        <ViewPanel exercises={exercises} unit={unit} basePath={basePath} athleteId={user.id} />
-      )}
+      <PrTrackerPanels
+        exercises={exercises}
+        unit={unit}
+        basePath={basePath}
+        initialPanel={active}
+        athleteId={user.id}
+        compact
+        summary={summary.recordCount > 0 ? <SummaryStrip summary={summary} unit={unit} /> : null}
+      />
     </div>
   )
 }

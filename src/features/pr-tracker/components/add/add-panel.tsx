@@ -2,11 +2,11 @@
 
 import { cn } from "cn"
 import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
 import type { WeightUnit } from "@/lib/units"
 
-import { loadExerciseSeries, type AddEntryOutcome } from "../../actions"
+import { discardEmptyExercise, loadExerciseSeries, type AddEntryOutcome } from "../../actions"
 import { normaliseShape, type SeriesShape } from "../../lib/series"
 import type { ExerciseListItem, ExerciseSummary, SeriesView } from "../../queries"
 import { ExercisePicker, PickedExercise } from "../exercise-picker"
@@ -38,6 +38,19 @@ export function AddPanel({ exercises, unit: initialUnit, basePath, athleteId }: 
   const [series, setSeries] = useState<SeriesView[]>([])
   const [shape, setShape] = useState<SeriesShape | null>(null)
   const [outcome, setOutcome] = useState<AddEntryOutcome | null>(null)
+  const entryRef = useRef<HTMLDivElement>(null)
+
+  // The weight field only exists once a PR type is chosen, so it appears below whatever the
+  // lifter was just looking at — often below the fold on a phone. An effect rather than the
+  // click handler, because the element is not in the DOM until this render commits.
+  useEffect(() => {
+    if (!shape) return
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    entryRef.current?.scrollIntoView({
+      behavior: reduceMotion ? "auto" : "smooth",
+      block: "center",
+    })
+  }, [shape])
 
   async function pickExercise(picked: ExerciseSummary) {
     setExercise(picked)
@@ -52,6 +65,8 @@ export function AddPanel({ exercises, unit: initialUnit, basePath, athleteId }: 
     setShape(null)
 
     if (!keepExercise) {
+      // Backing out of a movement that never got a record takes the movement with it.
+      if (exercise) void discardEmptyExercise({ exerciseId: exercise.id, athleteId })
       setExercise(null)
       setSeries([])
     } else if (logged) {
@@ -110,7 +125,7 @@ export function AddPanel({ exercises, unit: initialUnit, basePath, athleteId }: 
       )}
 
       {exercise && shape && (
-        <Step index="03" title="The lift" done={false}>
+        <Step index="03" title="The lift" done={false} ref={entryRef}>
           <EntryForm
             exercise={exercise}
             shape={shape}
@@ -131,14 +146,19 @@ function Step({
   title,
   done,
   children,
+  ref,
 }: {
   index: string
   title: string
   done: boolean
   children: React.ReactNode
+  ref?: React.Ref<HTMLDivElement>
 }) {
   return (
-    <section className="rounded-2xl bg-card/60 p-4 ring-1 ring-foreground/10 sm:p-5">
+    <section
+      ref={ref}
+      className="scroll-mt-24 rounded-2xl bg-card/60 p-4 ring-1 ring-foreground/10 sm:p-5"
+    >
       <h2 className="mb-4 flex items-center gap-2.5">
         <span
           className={cn(
