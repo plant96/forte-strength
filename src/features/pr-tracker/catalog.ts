@@ -11,33 +11,9 @@ import { compactName, slugify } from "./lib/slug"
  * Free text still works. This list is a shortcut, not a restriction.
  */
 
+/** Organises the list below. Not rendered today — the picker is a typeahead, not a browser. */
 export type MuscleGroup =
   "squat" | "bench" | "deadlift" | "press" | "back" | "arms" | "legs" | "core" | "olympic"
-
-export const GROUP_LABELS: Record<MuscleGroup, string> = {
-  squat: "Squat",
-  bench: "Bench",
-  deadlift: "Deadlift",
-  press: "Shoulders & pressing",
-  back: "Back & pulling",
-  arms: "Arms",
-  legs: "Legs & posterior chain",
-  core: "Core",
-  olympic: "Olympic lifts",
-}
-
-/** The order groups appear in the picker: the competition lifts first. */
-export const GROUP_ORDER: MuscleGroup[] = [
-  "squat",
-  "bench",
-  "deadlift",
-  "press",
-  "back",
-  "legs",
-  "arms",
-  "core",
-  "olympic",
-]
 
 export interface CatalogEntry {
   name: string

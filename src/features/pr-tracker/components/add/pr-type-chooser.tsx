@@ -1,7 +1,7 @@
 "use client"
 
 import { cn } from "cn"
-import { MinusIcon, PlusIcon, TrophyIcon } from "lucide-react"
+import { CheckIcon, MinusIcon, PlusIcon, TrophyIcon } from "lucide-react"
 import { m } from "motion/react"
 import { useState } from "react"
 
@@ -25,15 +25,18 @@ import type { SeriesView } from "../../queries"
  *
  * The PR types the lifter already has are shown as chips inside each card, so adding to an
  * existing history is one tap and visibly *adding to* it — the alternative, typing "2" into
- * a reps box and hoping it matches, is how people end up with two graphs for the same
- * thing. Creating a new type is a deliberate second step.
+ * a reps box and hoping it matches, is how people end up with two graphs for the same thing.
+ *
+ * Exactly one card is chosen at a time, and the choice is shown at full size rather than as
+ * another chip: next to a lone "already tracked" pill, a small marker reads like history
+ * rather than a selection.
  */
 
 interface PrTypeChooserProps {
   series: SeriesView[]
   unit: WeightUnit
   value: SeriesShape | null
-  onChange: (shape: SeriesShape) => void
+  onChange: (shape: SeriesShape | null) => void
 }
 
 const KIND_ORDER: PrKind[] = ["one-rep-max", "rep", "volume"]
@@ -53,6 +56,7 @@ export function PrTypeChooser({ series, unit, value, onChange }: PrTypeChooserPr
       {KIND_ORDER.map((kind) => {
         const existing = series.filter((item) => item.kind === kind)
         const selected = value?.kind === kind
+        const open = building === kind
         const isOneRepMax = kind === "one-rep-max"
 
         return (
@@ -60,18 +64,22 @@ export function PrTypeChooser({ series, unit, value, onChange }: PrTypeChooserPr
             key={kind}
             className={cn(
               "flex flex-col gap-3 rounded-xl bg-card p-4 ring-1 transition-colors",
-              selected ? "ring-primary/50" : "ring-foreground/10",
+              selected ? "ring-2 ring-primary" : open ? "ring-primary/40" : "ring-foreground/10",
             )}
           >
             <button
               type="button"
+              aria-pressed={selected}
               onClick={() => {
                 if (isOneRepMax) {
                   onChange({ kind, sets: 1, reps: 1 })
                   setBuilding(null)
-                } else {
-                  setBuilding((current) => (current === kind ? null : kind))
+                  return
                 }
+                // Moving to a kind that still needs a rep scheme drops the current choice,
+                // so the highlighted card is never a different one from the card in use.
+                onChange(null)
+                setBuilding((current) => (current === kind ? null : kind))
               }}
               className="flex flex-col gap-1 text-left"
             >
@@ -79,7 +87,9 @@ export function PrTypeChooser({ series, unit, value, onChange }: PrTypeChooserPr
                 <span
                   className={cn(
                     "grid size-7 place-items-center rounded-md transition-colors",
-                    selected ? "bg-primary/20 text-highlight" : "bg-muted text-muted-foreground",
+                    selected || open
+                      ? "bg-primary/20 text-highlight"
+                      : "bg-muted text-muted-foreground",
                   )}
                 >
                   <TrophyIcon className="size-3.5" />
@@ -93,98 +103,127 @@ export function PrTypeChooser({ series, unit, value, onChange }: PrTypeChooserPr
               </span>
             </button>
 
+            {/* The choice, at a size no chip below it could be mistaken for. */}
+            {selected && value && <SelectedBanner shape={value} />}
+
             {existing.length > 0 && (
-              <div className="flex flex-wrap gap-1.5">
-                {existing.map((item) => {
-                  const record = currentRecord(item.entries)
-                  const active = value ? sameShape(value, item) : false
-                  return (
-                    <button
-                      key={item.id}
-                      type="button"
-                      onClick={() => {
-                        onChange({ kind: item.kind, sets: item.sets, reps: item.reps })
-                        setBuilding(null)
-                      }}
-                      title={record ? `Record ${formatWeight(record.weightKg, unit)}` : undefined}
-                      className={cn(
-                        "rounded-full px-2.5 py-1 text-xs font-medium ring-1 transition-colors",
-                        active
-                          ? "bg-primary/20 text-foreground ring-primary/50"
-                          : "bg-muted/60 text-muted-foreground ring-foreground/10 hover:text-foreground",
-                      )}
-                    >
-                      {shapeChipLabel(item)}
-                      {record && (
-                        <span className="ml-1.5 text-muted-foreground">
-                          {formatWeight(record.weightKg, unit)}
-                        </span>
-                      )}
-                    </button>
-                  )
-                })}
+              <div className="flex flex-col gap-1.5">
+                <p className="text-[11px] tracking-wide text-muted-foreground uppercase">
+                  Already tracked
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {existing.map((item) => {
+                    const record = currentRecord(item.entries)
+                    const active = value ? sameShape(value, item) : false
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => {
+                          onChange({ kind: item.kind, sets: item.sets, reps: item.reps })
+                          setBuilding(null)
+                        }}
+                        className={cn(
+                          "rounded-full px-2.5 py-1 text-xs font-medium ring-1 transition-colors",
+                          active
+                            ? "bg-primary/20 text-foreground ring-primary/50"
+                            : "bg-muted/60 text-muted-foreground ring-foreground/10 hover:text-foreground",
+                        )}
+                      >
+                        {shapeChipLabel(item)}
+                        {record && (
+                          <span className="ml-1.5 text-muted-foreground">
+                            {formatWeight(record.weightKg, unit)}
+                          </span>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
             )}
 
-            {!isOneRepMax && (
-              <>
-                {building !== kind ? (
-                  <button
-                    type="button"
-                    onClick={() => setBuilding(kind)}
-                    className="self-start text-xs font-medium text-highlight hover:underline"
-                  >
-                    {kind === "volume"
-                      ? existing.length > 0
-                        ? "Different sets and reps"
-                        : "Choose sets and reps"
-                      : existing.length > 0
-                        ? "Different reps"
-                        : "Choose reps"}
-                  </button>
-                ) : (
-                  <m.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    className="flex flex-col gap-2 overflow-hidden"
-                  >
-                    {kind === "volume" && (
-                      <Stepper
-                        label="Sets"
-                        value={draft.sets}
-                        min={SERIES_LIMITS.volume.sets.min}
-                        max={SERIES_LIMITS.volume.sets.max}
-                        onChange={(sets) => setDraft((current) => ({ ...current, sets }))}
-                      />
-                    )}
+            {!isOneRepMax &&
+              (!open ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onChange(null)
+                    setBuilding(kind)
+                  }}
+                  className="self-start text-xs font-medium text-highlight hover:underline"
+                >
+                  {kind === "volume"
+                    ? existing.length > 0
+                      ? "Different sets and reps"
+                      : "Choose sets and reps"
+                    : existing.length > 0
+                      ? "Different reps"
+                      : "Choose reps"}
+                </button>
+              ) : (
+                <m.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  className="flex flex-col gap-2 overflow-hidden"
+                >
+                  {kind === "volume" && (
                     <Stepper
-                      label="Reps"
-                      value={draft.reps}
-                      min={
-                        kind === "rep" ? SERIES_LIMITS.rep.reps.min : SERIES_LIMITS.volume.reps.min
-                      }
-                      max={
-                        kind === "rep" ? SERIES_LIMITS.rep.reps.max : SERIES_LIMITS.volume.reps.max
-                      }
-                      onChange={(reps) => setDraft((current) => ({ ...current, reps }))}
+                      label="Sets"
+                      value={draft.sets}
+                      min={SERIES_LIMITS.volume.sets.min}
+                      max={SERIES_LIMITS.volume.sets.max}
+                      onChange={(sets) => setDraft((current) => ({ ...current, sets }))}
                     />
-                    <UseThisButton
-                      kind={kind}
-                      draft={draft}
-                      existing={existing}
-                      onChange={(shape) => {
-                        onChange(shape)
-                        setBuilding(null)
-                      }}
-                    />
-                  </m.div>
-                )}
-              </>
-            )}
+                  )}
+                  <Stepper
+                    label="Reps"
+                    value={draft.reps}
+                    min={
+                      kind === "rep" ? SERIES_LIMITS.rep.reps.min : SERIES_LIMITS.volume.reps.min
+                    }
+                    max={
+                      kind === "rep" ? SERIES_LIMITS.rep.reps.max : SERIES_LIMITS.volume.reps.max
+                    }
+                    onChange={(reps) => setDraft((current) => ({ ...current, reps }))}
+                  />
+                  <ConfirmButton
+                    kind={kind}
+                    draft={draft}
+                    existing={existing}
+                    onChange={(shape) => {
+                      onChange(shape)
+                      setBuilding(null)
+                    }}
+                  />
+                </m.div>
+              ))}
           </div>
         )
       })}
     </div>
+  )
+}
+
+/**
+ * What you picked, stated plainly. Deliberately the loudest thing in the card — the
+ * "already tracked" chips beneath it are history, and at a glance a lone chip reads like a
+ * selection when nothing else claims to be one.
+ */
+function SelectedBanner({ shape }: { shape: SeriesShape }) {
+  return (
+    <m.div
+      initial={{ opacity: 0, scale: 0.96 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ type: "spring", stiffness: 420, damping: 24 }}
+      className="flex items-center gap-2.5 rounded-lg bg-primary px-3 py-2.5 text-primary-foreground"
+    >
+      <CheckIcon className="size-4 shrink-0" />
+      <span className="font-heading text-lg leading-none font-bold tracking-wide uppercase">
+        {shapeChipLabel(shape)}
+      </span>
+      <span className="ml-auto text-[11px] tracking-wide uppercase opacity-80">Selected</span>
+    </m.div>
   )
 }
 
@@ -195,7 +234,7 @@ export function PrTypeChooser({ series, unit, value, onChange }: PrTypeChooserPr
  * The wording is "choose", never "start": records are logged after the session, so nothing
  * is being begun here. The lifter is telling us which set the weight belonged to.
  */
-function UseThisButton({
+function ConfirmButton({
   kind,
   draft,
   existing,
