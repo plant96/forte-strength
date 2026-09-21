@@ -227,40 +227,38 @@ export async function getSeriesDetail(userId: string, slug: string, shape: Serie
 export interface TrackerSummary {
   exerciseCount: number
   recordCount: number
-  /** The largest single jump between consecutive records, across every series. */
-  biggestJumpKg: number | null
+  /** The earliest and latest record days across every series. */
+  firstDay: Day | null
   lastDay: Day | null
 }
 
-/** The stat strip above the View panel. */
+/** The stat strip at the top of the View panel's movement list. */
 export async function getTrackerSummary(userId: string): Promise<TrackerSummary> {
   const series = await db.prSeries.findMany({
     where: { userId },
     select: {
       exerciseId: true,
-      entries: { orderBy: ENTRY_ORDER, select: { weightKg: true, achievedOn: true } },
+      entries: { select: { achievedOn: true } },
     },
   })
 
   const exercises = new Set<string>()
   let recordCount = 0
-  let biggestJumpKg: number | null = null
+  let firstDay: Day | null = null
   let lastDay: Day | null = null
 
   for (const row of series) {
     if (row.entries.length > 0) exercises.add(row.exerciseId)
     recordCount += row.entries.length
 
-    for (const [index, entry] of row.entries.entries()) {
+    for (const entry of row.entries) {
       const day = toDay(entry.achievedOn)
+      if (firstDay === null || day < firstDay) firstDay = day
       if (lastDay === null || day > lastDay) lastDay = day
-      if (index === 0) continue
-      const jump = entry.weightKg - row.entries[index - 1].weightKg
-      if (biggestJumpKg === null || jump > biggestJumpKg) biggestJumpKg = jump
     }
   }
 
-  return { exerciseCount: exercises.size, recordCount, biggestJumpKg, lastDay }
+  return { exerciseCount: exercises.size, recordCount, firstDay, lastDay }
 }
 
 /** The current record on a series, for the "you need to beat X" hint while typing. */

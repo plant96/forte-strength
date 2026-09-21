@@ -34,7 +34,10 @@ interface PrTrackerPanelsProps {
   initialPanel: Panel
   /** Set when a coach is working on a client's records. */
   athleteId?: string
-  /** Rendered between the switch and the panel; server-rendered, so it stays off the client. */
+  /**
+   * Rendered at the top of the View panel's movement list only — not on Add, and not once
+   * a movement is open. Server-rendered, so it stays off the client.
+   */
   summary?: React.ReactNode
   /** The admin page sits inside its own chrome and wants a tighter switch. */
   compact?: boolean
@@ -109,8 +112,6 @@ export function PrTrackerPanels({
         })}
       </nav>
 
-      {summary}
-
       {panel === "add" ? (
         <AddPanel exercises={exercises} unit={unit} basePath={basePath} athleteId={athleteId} />
       ) : (
@@ -120,6 +121,7 @@ export function PrTrackerPanels({
           unit={unit}
           basePath={basePath}
           athleteId={athleteId}
+          summary={summary}
         />
       )}
     </div>

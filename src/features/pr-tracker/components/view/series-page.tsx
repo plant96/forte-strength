@@ -58,8 +58,8 @@ export function SeriesPage({
         {backLabel}
       </Link>
 
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div>
+      <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
+        <div className="min-w-0">
           <p className="font-heading text-xs font-semibold tracking-[0.18em] text-highlight uppercase">
             {seriesLabel(shape)}
           </p>
@@ -68,7 +68,7 @@ export function SeriesPage({
           </h1>
         </div>
         {record && (
-          <div className="text-right">
+          <div className="shrink-0 sm:text-right">
             <p className="font-heading text-4xl font-bold tabular-nums">
               {formatWeightValue(record.weightKg, unit)}
               <span className="ml-1 text-lg font-medium text-muted-foreground">{unit}</span>

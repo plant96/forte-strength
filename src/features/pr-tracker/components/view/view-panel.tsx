@@ -29,9 +29,11 @@ interface ViewPanelProps {
   unit: WeightUnit
   basePath: string
   athleteId?: string
+  /** The whole-history stat strip. Shown with the movement list, not with a movement. */
+  summary?: React.ReactNode
 }
 
-export function ViewPanel({ exercises, unit, basePath, athleteId }: ViewPanelProps) {
+export function ViewPanel({ exercises, unit, basePath, athleteId, summary }: ViewPanelProps) {
   const [exercise, setExercise] = useState<ExerciseSummary | null>(null)
   const [series, setSeries] = useState<SeriesView[]>([])
   const [pending, startTransition] = useTransition()
@@ -45,12 +47,15 @@ export function ViewPanel({ exercises, unit, basePath, athleteId }: ViewPanelPro
 
   if (!exercise) {
     return (
-      <div className="@container rounded-2xl bg-card/60 p-4 ring-1 ring-foreground/10 sm:p-5">
-        <h2 className="mb-4 font-heading text-sm font-semibold tracking-[0.18em] uppercase">
-          Pick a movement
-        </h2>
-        <ExercisePicker exercises={exercises} unit={unit} mode="select" onPick={pick} />
-      </div>
+      <>
+        {summary}
+        <div className="@container rounded-2xl bg-card/60 p-4 ring-1 ring-foreground/10 sm:p-5">
+          <h2 className="mb-4 font-heading text-sm font-semibold tracking-[0.18em] uppercase">
+            Pick a movement
+          </h2>
+          <ExercisePicker exercises={exercises} unit={unit} mode="select" onPick={pick} />
+        </div>
+      </>
     )
   }
 

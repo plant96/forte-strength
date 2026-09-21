@@ -37,7 +37,7 @@ export default async function PrTrackerPage(props: PageProps<"/tools/pr-tracker"
         unit={unit}
         basePath="/tools/pr-tracker"
         initialPanel={initial}
-        summary={summary.recordCount > 0 ? <SummaryStrip summary={summary} unit={unit} /> : null}
+        summary={summary.recordCount > 0 ? <SummaryStrip summary={summary} /> : null}
       />
     </ToolShell>
   )

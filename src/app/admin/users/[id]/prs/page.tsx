@@ -67,7 +67,7 @@ export default async function AdminClientPrsPage(props: Props) {
         initialPanel={active}
         athleteId={user.id}
         compact
-        summary={summary.recordCount > 0 ? <SummaryStrip summary={summary} unit={unit} /> : null}
+        summary={summary.recordCount > 0 ? <SummaryStrip summary={summary} /> : null}
       />
     </div>
   )

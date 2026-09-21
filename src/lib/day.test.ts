@@ -12,6 +12,7 @@ import {
   formatDayShort,
   isDay,
   makeDay,
+  monthsBetween,
 } from "./day"
 
 /**
@@ -77,6 +78,21 @@ describe("daysBetween", () => {
   it("is NaN rather than a wrong number for junk", () => {
     expect(daysBetween("", "2026-08-01")).toBeNaN()
     expect(daysBetween("2026-08-01", "oops")).toBeNaN()
+  })
+})
+
+describe("monthsBetween", () => {
+  it("measures a year as twelve months", () => {
+    expect(monthsBetween("2025-09-20", "2026-09-20")).toBeCloseTo(12, 1)
+  })
+
+  it("is zero on the same day and tiny across a month boundary", () => {
+    expect(monthsBetween("2026-09-20", "2026-09-20")).toBe(0)
+    expect(monthsBetween("2026-09-30", "2026-10-01")).toBeLessThan(0.1)
+  })
+
+  it("is NaN rather than a wrong number for junk", () => {
+    expect(monthsBetween("", "2026-08-01")).toBeNaN()
   })
 })
 

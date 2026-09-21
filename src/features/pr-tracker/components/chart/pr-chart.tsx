@@ -8,6 +8,7 @@ import type { WeightUnit } from "@/lib/units"
 
 import { dayToDate, formatDay, formatDayShort, type Day } from "@/lib/day"
 import { extent, niceTicks, padDomain, project, type Domain } from "../../lib/scale"
+import { dateTickCount, pickDateTicks, spansYears } from "../../lib/ticks"
 import { formatDelta, formatWeightValue, fromKg } from "../../lib/weight"
 import type { EntryView } from "../../queries"
 import { burstFrom, prefersReducedMotion, sparkleFrom } from "./particles"
@@ -255,7 +256,14 @@ export function PrChart({
   }, [celebrate?.entryId])
 
   const yTicks = niceTicks(yDomain, 4)
-  const xTicks = pickDateTicks(visible.length ? visible : sorted, spark ? 0 : 4)
+  // Judged on every record rather than the visible ones, so the label format does not
+  // change halfway through a celebration.
+  const withYear = spansYears(sorted)
+  const formatTick = withYear ? formatDay : formatDayShort
+  const xTicks = pickDateTicks(
+    visible.length ? visible : sorted,
+    spark ? 0 : dateTickCount(plotWidth, withYear),
+  )
 
   const summary =
     label ??
@@ -374,20 +382,26 @@ export function PrChart({
           )}
 
           {!spark &&
-            xTicks.map((day) => (
-              <m.text
-                key={day}
-                initial={intro ? { opacity: 0 } : false}
-                animate={{ opacity: 1 }}
-                x={pad.left + project(timeOf(day), xDomain, [0, plotWidth])}
-                y={height - 8}
-                textAnchor="middle"
-                className="fill-muted-foreground"
-                style={{ fontSize: 11 }}
-              >
-                {formatDayShort(day)}
-              </m.text>
-            ))}
+            xTicks.map((day) => {
+              const x = pad.left + project(timeOf(day), xDomain, [0, plotWidth])
+              // A label near either edge hangs inward rather than spilling past the plot.
+              const anchor =
+                x < pad.left + 40 ? "start" : x > width - pad.right - 40 ? "end" : "middle"
+              return (
+                <m.text
+                  key={day}
+                  initial={intro ? { opacity: 0 } : false}
+                  animate={{ opacity: 1 }}
+                  x={x}
+                  y={height - 8}
+                  textAnchor={anchor}
+                  className="fill-muted-foreground"
+                  style={{ fontSize: 11 }}
+                >
+                  {formatTick(day)}
+                </m.text>
+              )
+            })}
 
           {points.length > 1 && (
             <>
@@ -588,26 +602,4 @@ function Tooltip({
       {point.entry.byCoach && <p className="mt-0.5 text-muted-foreground">Logged by coach</p>}
     </div>
   )
-}
-
-/**
- * Date ticks taken from the records themselves, thinned to fit. Inventing evenly spaced
- * dates would imply readings on days nothing was lifted.
- */
-function pickDateTicks(entries: EntryView[], count: number): Day[] {
-  if (count <= 0 || entries.length === 0) return []
-
-  // Deduplicated, because several records can share a day and a date only needs labelling
-  // once — two ticks on one date would also collide as React keys.
-  const days = new Set<Day>()
-  if (entries.length <= count) {
-    for (const entry of entries) days.add(entry.achievedOn)
-    return [...days]
-  }
-
-  const step = (entries.length - 1) / (count - 1)
-  for (let index = 0; index < count; index++) {
-    days.add(entries[Math.round(index * step)].achievedOn)
-  }
-  return [...days]
 }

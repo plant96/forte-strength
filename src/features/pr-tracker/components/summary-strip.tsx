@@ -1,13 +1,21 @@
-import { DumbbellIcon, TrendingUpIcon, TrophyIcon } from "lucide-react"
+import { CalendarDaysIcon, DumbbellIcon, TrophyIcon } from "lucide-react"
 
-import type { WeightUnit } from "@/lib/units"
-
-import { describeDay } from "@/lib/day"
-import { formatWeightValue } from "../lib/weight"
+import { describeDay, monthsBetween, today } from "@/lib/day"
 import type { TrackerSummary } from "../queries"
 
-/** The running totals above the panels — small, factual, and the quiet reward for logging. */
-export function SummaryStrip({ summary, unit }: { summary: TrackerSummary; unit: WeightUnit }) {
+const paceFormat = new Intl.NumberFormat("en-US", { maximumFractionDigits: 1 })
+
+/**
+ * The running totals at the top of the View panel's movement list — small, factual, and
+ * the quiet reward for logging. They describe the whole history, so they sit only on the
+ * page that is about the whole history: not on the Add panel, and not on a movement.
+ */
+export function SummaryStrip({ summary }: { summary: TrackerSummary }) {
+  // Records per month since the first one. Under a month of history counts as a month, so
+  // a first week of logging reads as a pace rather than a spike.
+  const months = summary.firstDay ? monthsBetween(summary.firstDay, today()) : Number.NaN
+  const pace = Number.isFinite(months) ? summary.recordCount / Math.max(1, months) : null
+
   const tiles = [
     {
       icon: DumbbellIcon,
@@ -20,12 +28,9 @@ export function SummaryStrip({ summary, unit }: { summary: TrackerSummary; unit:
       label: summary.recordCount === 1 ? "Record set" : "Records set",
     },
     {
-      icon: TrendingUpIcon,
-      value:
-        summary.biggestJumpKg !== null
-          ? `+${formatWeightValue(summary.biggestJumpKg, unit)} ${unit}`
-          : "—",
-      label: "Biggest single jump",
+      icon: CalendarDaysIcon,
+      value: pace !== null ? paceFormat.format(pace) : "—",
+      label: "Average monthly PRs",
     },
   ]
 

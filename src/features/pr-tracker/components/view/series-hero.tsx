@@ -41,8 +41,8 @@ export function SeriesHero({
 
   return (
     <section className="flex flex-col gap-5 rounded-2xl bg-card p-5 ring-1 ring-foreground/10 sm:p-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+        <div className="min-w-0">
           <p className="font-heading text-xs font-semibold tracking-[0.18em] text-muted-foreground uppercase">
             {fallback ? seriesLabel(series) : "One rep max"}
           </p>
@@ -57,7 +57,7 @@ export function SeriesHero({
         </div>
 
         {record && (
-          <div className="text-right">
+          <div className="shrink-0 sm:text-right">
             <p className="font-heading text-4xl font-bold tabular-nums">
               {formatWeightValue(record.weightKg, unit)}
               <span className="ml-1 text-lg font-medium text-muted-foreground">{unit}</span>
@@ -96,14 +96,15 @@ export function SeriesHero({
               </li>
             ))}
         </ul>
-        <Button variant="outline" size="sm" className="h-9" asChild>
-          <Link href={href}>
-            {series.entries.length === 1
-              ? "The full record"
-              : `All ${series.entries.length} records`}
-            <ArrowRightIcon />
-          </Link>
-        </Button>
+        {/* One record is the whole story, and it is on the graph above. */}
+        {series.entries.length > 1 && (
+          <Button variant="outline" size="sm" className="h-9" asChild>
+            <Link href={href}>
+              All {series.entries.length} records
+              <ArrowRightIcon />
+            </Link>
+          </Button>
+        )}
       </div>
     </section>
   )

@@ -3,7 +3,7 @@
 import { ArrowRightIcon, PlusIcon, SparklesIcon, TrophyIcon } from "lucide-react"
 import { m } from "motion/react"
 import Link from "next/link"
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
 import { AnimatedNumber } from "@/components/motion/animated-number"
 import { Button } from "@/components/ui/button"
@@ -38,6 +38,22 @@ export function Celebration({
   onLogAnother: () => void
 }) {
   const [settled, setSettled] = useState(false)
+  const cardRef = useRef<HTMLDivElement>(null)
+
+  // The three-step form this replaces was taller than this card, so the moment it swaps in
+  // the browser clamps the scroll to the new page bottom — often with the chart's top edge
+  // above the viewport as it starts to draw. Bring the card up during the chart's opening
+  // hold, so the growth, the draw and the burst all happen on screen.
+  useEffect(() => {
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    const frame = requestAnimationFrame(() => {
+      cardRef.current?.scrollIntoView({
+        behavior: reduceMotion ? "auto" : "smooth",
+        block: "start",
+      })
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [])
 
   const entry = outcome.series.entries.find((item) => item.id === outcome.entryId)
   const gainKg = outcome.previousKg !== null && entry ? entry.weightKg - outcome.previousKg : null
@@ -61,12 +77,13 @@ export function Celebration({
 
   return (
     <m.div
+      ref={cardRef}
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ type: "spring", stiffness: 260, damping: 26 }}
-      className="flex flex-col gap-5 rounded-2xl bg-card p-5 ring-1 ring-primary/30 sm:p-6"
+      className="flex scroll-mt-24 flex-col gap-5 rounded-2xl bg-card p-5 ring-1 ring-primary/30 sm:p-6"
     >
-      <div className="flex flex-wrap items-start justify-between gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex items-start gap-3">
           <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary/15 text-highlight">
             {outcome.placement === "first" ? (
@@ -82,7 +99,7 @@ export function Celebration({
         </div>
 
         {entry && (
-          <div className="text-right">
+          <div className="shrink-0 sm:text-right">
             <p className="font-heading text-3xl font-bold tabular-nums">
               {settled ? (
                 // Counts up from the record it beat, so the gain is felt rather than read.

@@ -32,6 +32,17 @@ interface AddPanelProps {
   athleteId?: string
 }
 
+/** The lift step folds open and closed rather than popping in and out. */
+const entryVariants = {
+  closed: { opacity: 0, height: 0 },
+  open: { opacity: 1, height: "auto" },
+}
+
+function scrollToStep(element: HTMLElement | null) {
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  element?.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" })
+}
+
 export function AddPanel({ exercises, unit: initialUnit, basePath, athleteId }: AddPanelProps) {
   const router = useRouter()
   const [unit, setUnit] = useState(initialUnit)
@@ -40,17 +51,17 @@ export function AddPanel({ exercises, unit: initialUnit, basePath, athleteId }: 
   const [shape, setShape] = useState<SeriesShape | null>(null)
   const [outcome, setOutcome] = useState<AddEntryOutcome | null>(null)
   const entryRef = useRef<HTMLDivElement>(null)
+  const entryWasOpen = useRef(false)
 
   // The weight field only exists once a PR type is chosen, so it appears below whatever the
-  // lifter was just looking at — often below the fold on a phone. An effect rather than the
-  // click handler, because the element is not in the DOM until this render commits.
+  // lifter was just looking at — often below the fold on a phone. Changing PR type while
+  // the step is already open can scroll to it at once: it is at full height. The *first*
+  // open is left to the wrapper's `onAnimationComplete` below — until the fold-open ends
+  // the page has not grown to include the step, and a scroll aimed at it lands short.
   useEffect(() => {
-    if (!shape) return
-    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    entryRef.current?.scrollIntoView({
-      behavior: reduceMotion ? "auto" : "smooth",
-      block: "center",
-    })
+    const wasOpen = entryWasOpen.current
+    entryWasOpen.current = shape !== null
+    if (shape && wasOpen) scrollToStep(entryRef.current)
   }, [shape])
 
   async function pickExercise(picked: ExerciseSummary) {
@@ -132,11 +143,19 @@ export function AddPanel({ exercises, unit: initialUnit, basePath, athleteId }: 
         {exercise && shape && (
           <m.div
             key="entry"
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
+            variants={entryVariants}
+            initial="closed"
+            animate="open"
+            exit="closed"
             transition={{ duration: 0.2, ease: "easeOut" }}
-            className="overflow-hidden"
+            // Fires with the variant's name once every value has settled, height included —
+            // the earliest moment a scroll can be aimed at where the step really is.
+            onAnimationComplete={(definition) => {
+              if (definition === "open") scrollToStep(entryRef.current)
+            }}
+            // `clip`, not `hidden`: a hidden overflow is still a scroll container, and
+            // scrollIntoView would scroll the step around inside a wrapper that is 0px tall.
+            className="overflow-clip"
           >
             <Step index="03" title="The lift" done={false} ref={entryRef}>
               <EntryForm

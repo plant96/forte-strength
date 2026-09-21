@@ -62,7 +62,7 @@ export function formatDay(day: Day) {
   return dayFormat.format(dayToDate(day))
 }
 
-/** "Aug 12" — for axis ticks, where the year is carried by the axis as a whole. */
+/** "Aug 12" — for axis ticks on a line that stays inside one year. */
 export function formatDayShort(day: Day) {
   if (!isDay(day)) return ""
   return shortDayFormat.format(dayToDate(day))
@@ -72,6 +72,18 @@ export function formatDayShort(day: Day) {
 export function daysBetween(a: Day, b: Day) {
   if (!isDay(a) || !isDay(b)) return Number.NaN
   return Math.round((dayToDate(b).getTime() - dayToDate(a).getTime()) / 86_400_000)
+}
+
+/** The mean Gregorian month: 365.2425 / 12 days. */
+const DAYS_PER_MONTH = 30.436875
+
+/**
+ * Months between two days, as a fraction of the mean month; NaN if either is not a day.
+ * Counting calendar months would make 30 Sep → 1 Oct two months, which is the wrong
+ * answer for a rate.
+ */
+export function monthsBetween(a: Day, b: Day) {
+  return daysBetween(a, b) / DAYS_PER_MONTH
 }
 
 /** "today", "yesterday", "3 days ago", "5 weeks ago", then a plain date past a year. */

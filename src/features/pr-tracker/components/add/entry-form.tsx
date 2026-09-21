@@ -166,6 +166,14 @@ export function EntryForm({
               setDay(next)
               setError(null)
             }}
+            // Opening the calendar cleared the day, so closing it without one leaves the
+            // record undated. Say so, rather than leaving a disabled button to explain itself.
+            onDismiss={() =>
+              setError({
+                field: "achievedOn",
+                message: "Pick the day you hit it — tap a date on the calendar",
+              })
+            }
             invalid={error?.field === "achievedOn"}
           />
         </div>

@@ -50,18 +50,42 @@ const MONTH_NAMES = [
 /** Sunday-first, matching the rest of the site's US conventions. */
 const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"]
 
+/**
+ * Six rows of seven, whatever the month. A grid that grew a row between months would
+ * change the popover's height, and floating-ui re-runs its collision check on resize —
+ * which is how paging from one month to the next used to flip the calendar to the other
+ * side of the field.
+ */
+const GRID_CELLS = 42
+
 interface CalendarProps {
   /** The selected day, or "" when nothing is chosen yet. */
   value: Day
   onSelect: (day: Day) => void
   min?: Day
   max?: Day
+  /** The month to open on when nothing is selected. Any day inside it will do. */
+  initialMonth?: Day
+  /** Reports the first of the month whenever the visible month changes. */
+  onMonthChange?: (firstOfMonth: Day) => void
 }
 
-export function Calendar({ value, onSelect, min, max }: CalendarProps) {
+export function Calendar({
+  value,
+  onSelect,
+  min,
+  max,
+  initialMonth,
+  onMonthChange,
+}: CalendarProps) {
   const now = today()
-  // Opens on the selected month, or as close to the allowed range as today gets.
-  const initial = dayParts(value) ?? dayParts(clampToRange(now, min, max)) ?? dayParts(now)!
+  // Opens on the selected month, else the month asked for, else as close to the allowed
+  // range as today gets.
+  const initial =
+    dayParts(value) ??
+    dayParts(initialMonth ?? "") ??
+    dayParts(clampToRange(now, min, max)) ??
+    dayParts(now)!
   const [view, setView] = useState({ year: initial.year, month: initial.month })
 
   const minYear = dayParts(min ?? "")?.year ?? 1900
@@ -75,11 +99,17 @@ export function Calendar({ value, onSelect, min, max }: CalendarProps) {
     ...Array.from({ length: leading }, () => null),
     ...Array.from({ length: total }, (_, index) => makeDay(view.year, view.month, index + 1)),
   ]
+  cells.push(...Array.from({ length: GRID_CELLS - cells.length }, () => null))
+
+  function changeView(next: { year: number; month: number }) {
+    setView(next)
+    onMonthChange?.(makeDay(next.year, next.month, 1))
+  }
 
   function shift(months: number) {
     const anchor = makeDay(view.year, view.month, 1)
     const next = dayParts(addMonths(anchor, months))
-    if (next) setView({ year: next.year, month: next.month })
+    if (next) changeView({ year: next.year, month: next.month })
   }
 
   const firstOfView = makeDay(view.year, view.month, 1)
@@ -92,7 +122,7 @@ export function Calendar({ value, onSelect, min, max }: CalendarProps) {
       <div className="mb-3 flex items-center gap-1.5">
         <Select
           value={String(view.month)}
-          onValueChange={(month) => setView((current) => ({ ...current, month: Number(month) }))}
+          onValueChange={(month) => changeView({ ...view, month: Number(month) })}
         >
           <SelectTrigger className="h-8 flex-1" aria-label="Month">
             <SelectValue />
@@ -108,7 +138,7 @@ export function Calendar({ value, onSelect, min, max }: CalendarProps) {
 
         <Select
           value={String(view.year)}
-          onValueChange={(year) => setView((current) => ({ ...current, year: Number(year) }))}
+          onValueChange={(year) => changeView({ ...view, year: Number(year) })}
         >
           <SelectTrigger className="h-8 w-[5.25rem]" aria-label="Year">
             <SelectValue />
@@ -141,7 +171,8 @@ export function Calendar({ value, onSelect, min, max }: CalendarProps) {
         ))}
 
         {cells.map((day, index) => {
-          if (!day) return <div key={`pad-${index}`} />
+          // Sized like a day, or a row of nothing but padding would collapse to nothing.
+          if (!day) return <div key={`pad-${index}`} className="size-8" />
 
           const disabled = Boolean((min && day < min) || (max && day > max))
           const selected = day === value
