@@ -11,6 +11,7 @@ import { seriesLabel, seriesTitle, type SeriesShape } from "../../lib/series"
 import { formatWeightValue } from "../../lib/weight"
 import type { ExerciseSummary, SeriesView } from "../../queries"
 import { PrChart } from "../chart/pr-chart"
+import { StatRow } from "../stat-row"
 import { EntryList } from "./entry-list"
 
 /**
@@ -58,7 +59,7 @@ export function SeriesPage({
         {backLabel}
       </Link>
 
-      <header className="flex flex-wrap items-end gap-x-6 gap-y-2">
+      <StatRow as="header" className="items-end gap-x-6 gap-y-2">
         <div className="min-w-0">
           <p className="font-heading text-xs font-semibold tracking-[0.18em] text-highlight uppercase">
             {seriesLabel(shape)}
@@ -69,12 +70,12 @@ export function SeriesPage({
         </div>
         {/* Beside the title while the number fits there, below it only when it does not. */}
         {record && (
-          <div className="flex-1 text-right">
+          <div className="flex-1 text-right group-data-[stacked=true]:text-left">
             <p className="font-heading text-4xl font-bold whitespace-nowrap tabular-nums">
               {formatWeightValue(record.weightKg, unit)}
               <span className="ml-1 text-lg font-medium text-muted-foreground">{unit}</span>
             </p>
-            <p className="flex flex-wrap justify-end gap-x-1.5 text-xs text-muted-foreground">
+            <p className="flex flex-wrap justify-end gap-x-1.5 text-xs text-muted-foreground group-data-[stacked=true]:justify-start">
               <span className="whitespace-nowrap">
                 current record · {describeDay(record.achievedOn)}
               </span>
@@ -86,7 +87,7 @@ export function SeriesPage({
             </p>
           </div>
         )}
-      </header>
+      </StatRow>
 
       <section className="rounded-2xl bg-card p-5 ring-1 ring-foreground/10 sm:p-6">
         <PrChart

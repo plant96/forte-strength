@@ -14,6 +14,7 @@ import { formatDay } from "@/lib/day"
 import { seriesTitle } from "../../lib/series"
 import { formatWeightValue, fromKg } from "../../lib/weight"
 import { PrChart } from "../chart/pr-chart"
+import { StatRow } from "../stat-row"
 
 /**
  * What a new record looks like the moment it lands.
@@ -83,7 +84,7 @@ export function Celebration({
       transition={{ type: "spring", stiffness: 260, damping: 26 }}
       className="flex scroll-mt-24 flex-col gap-5 rounded-2xl bg-card p-5 ring-1 ring-primary/30 sm:p-6"
     >
-      <div className="flex flex-wrap items-start gap-x-6 gap-y-2">
+      <StatRow className="items-start gap-x-6 gap-y-2">
         <div className="flex items-start gap-3">
           <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary/15 text-highlight">
             {outcome.placement === "first" ? (
@@ -100,7 +101,7 @@ export function Celebration({
 
         {/* Beside the headline while the number fits there, below it only when it does not. */}
         {entry && (
-          <div className="flex-1 text-right">
+          <div className="flex-1 text-right group-data-[stacked=true]:text-left">
             <p className="font-heading text-3xl font-bold whitespace-nowrap tabular-nums">
               {settled ? (
                 // Counts up from the record it beat, so the gain is felt rather than read.
@@ -126,7 +127,7 @@ export function Celebration({
             )}
           </div>
         )}
-      </div>
+      </StatRow>
 
       <PrChart
         entries={outcome.series.entries}

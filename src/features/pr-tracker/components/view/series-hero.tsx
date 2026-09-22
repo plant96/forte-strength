@@ -12,6 +12,7 @@ import { seriesLabel, seriesTitle } from "../../lib/series"
 import { formatWeightValue } from "../../lib/weight"
 import type { SeriesView } from "../../queries"
 import { PrChart } from "../chart/pr-chart"
+import { StatRow } from "../stat-row"
 
 /**
  * The headline graph for a movement — its one-rep max where there is one, otherwise
@@ -41,7 +42,7 @@ export function SeriesHero({
 
   return (
     <section className="flex flex-col gap-5 rounded-2xl bg-card p-5 ring-1 ring-foreground/10 sm:p-6">
-      <div className="flex flex-wrap items-start gap-x-6 gap-y-2">
+      <StatRow className="items-start gap-x-6 gap-y-2">
         <div className="min-w-0">
           <p className="font-heading text-xs font-semibold tracking-[0.18em] text-muted-foreground uppercase">
             {fallback ? seriesLabel(series) : "One rep max"}
@@ -60,12 +61,12 @@ export function SeriesHero({
             only when it truly does not: the block asks for no more width than the number,
             and the two notes under it wrap independently into whatever room is left. */}
         {record && (
-          <div className="flex-1 text-right">
+          <div className="flex-1 text-right group-data-[stacked=true]:text-left">
             <p className="font-heading text-4xl font-bold whitespace-nowrap tabular-nums">
               {formatWeightValue(record.weightKg, unit)}
               <span className="ml-1 text-lg font-medium text-muted-foreground">{unit}</span>
             </p>
-            <p className="flex flex-wrap justify-end gap-x-1.5 text-xs text-muted-foreground">
+            <p className="flex flex-wrap justify-end gap-x-1.5 text-xs text-muted-foreground group-data-[stacked=true]:justify-start">
               <span className="whitespace-nowrap">set {describeDay(record.achievedOn)}</span>
               {gainKg !== null && gainKg > 0 && (
                 <span className="inline-flex items-center gap-0.5 whitespace-nowrap text-chart-4">
@@ -76,7 +77,7 @@ export function SeriesHero({
             </p>
           </div>
         )}
-      </div>
+      </StatRow>
 
       <PrChart
         entries={series.entries}
