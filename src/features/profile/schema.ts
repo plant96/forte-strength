@@ -98,3 +98,26 @@ export function createProfileSchema(today: () => Date = () => new Date()) {
 }
 
 export const profileFormSchema = createProfileSchema()
+
+// ---------------------------------------------------------------------------
+// Name (collected first in onboarding; also the mandatory popup for older accounts)
+// ---------------------------------------------------------------------------
+
+export const NAME_MAX = 50
+
+export interface NameFormInput {
+  firstName: string
+  lastName: string
+}
+
+export const NAME_FORM_DEFAULTS: NameFormInput = { firstName: "", lastName: "" }
+
+/** Trims both names; each must be 1–50 characters. */
+export const nameSchema = z
+  .object({ firstName: z.string(), lastName: z.string() })
+  .transform((raw, ctx): NameFormInput => {
+    const reader = createFormReader(raw, ctx)
+    const firstName = reader.text("firstName", { label: "First name", max: NAME_MAX })
+    const lastName = reader.text("lastName", { label: "Last name", max: NAME_MAX })
+    return reader.valid ? { firstName, lastName } : z.NEVER
+  })

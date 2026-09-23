@@ -27,7 +27,11 @@ const COLUMNS: UserColumn[] = [
   {
     header: "Profile",
     cell: (user) => (
-      <OnboardingBadge onboardedAt={user.onboardedAt} skippedAt={user.onboardingSkippedAt} />
+      <OnboardingBadge
+        onboardedAt={user.onboardedAt}
+        skippedAt={user.onboardingSkippedAt}
+        required={user.onboardingRequired}
+      />
     ),
   },
   { header: "Role", cell: (user) => <RoleBadge role={user.role} /> },
@@ -90,6 +94,7 @@ export default async function AdminClientsPage(props: PageProps<"/admin/clients"
                 <OnboardingBadge
                   onboardedAt={user.onboardedAt}
                   skippedAt={user.onboardingSkippedAt}
+                  required={user.onboardingRequired}
                 />
                 <RoleBadge role={user.role} />
               </>

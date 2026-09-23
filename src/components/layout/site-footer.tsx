@@ -2,6 +2,8 @@ import Link from "next/link"
 
 import { siteConfig } from "@/config/site"
 
+import { BugReportDialog } from "./bug-report-dialog"
+
 export function SiteFooter() {
   return (
     <footer className="border-t border-border/60">
@@ -11,12 +13,15 @@ export function SiteFooter() {
         </p>
         <div className="flex flex-col gap-2 sm:items-end">
           <p>Estimates for educational purposes only. Not medical advice.</p>
-          <Link
-            href="/privacy"
-            className="underline-offset-4 hover:text-foreground hover:underline"
-          >
-            Analytics privacy
-          </Link>
+          <div className="flex items-center gap-4">
+            <BugReportDialog />
+            <Link
+              href="/privacy"
+              className="underline-offset-4 hover:text-foreground hover:underline"
+            >
+              Analytics privacy
+            </Link>
+          </div>
         </div>
       </div>
     </footer>

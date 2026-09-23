@@ -14,9 +14,14 @@ export interface NavLink {
   locked?: boolean
 }
 
+/** The lists the coach can add "coming soon" teasers to. */
+export type NavMenuKind = "tools" | "resources"
+
 export interface NavMenu {
   title: string
   items: NavLink[]
+  /** Which coming-soon list is appended under this menu (clients and admins only). */
+  kind?: NavMenuKind
 }
 
 export type NavEntry = NavLink | NavMenu
@@ -62,6 +67,12 @@ export const resources: NavLink[] = [
 /** The line shown under a locked nav entry, in place of its description. */
 export const LOCKED_NAV_HINT = "Coaching clients only — apply to unlock"
 
+/**
+ * The client home. Not part of `mainNav` (so it never reaches the sitemap); the header
+ * splices it in for clients and admins — see `components/layout/nav-entries.ts`.
+ */
+export const DASHBOARD_NAV: NavLink = { title: "Dashboard", href: "/dashboard" }
+
 export const siteConfig = {
   name: "Forte Strength Systems",
   shortName: "Forte Strength",
@@ -71,8 +82,8 @@ export const siteConfig = {
   mainNav: [
     { title: "Coaching", href: "/" },
     { title: "Gallery", href: "/gallery" },
-    { title: "Tools", items: tools },
-    { title: "Resources", items: resources },
+    { title: "Tools", kind: "tools", items: tools },
+    { title: "Resources", kind: "resources", items: resources },
   ] satisfies NavEntry[],
   cta: { title: "Apply", href: "/application" },
 } as const

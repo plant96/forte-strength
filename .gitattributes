@@ -1,0 +1,3 @@
+# Prettier expects LF (its default endOfLine). Pin checkouts to LF on every OS so a
+# Windows machine with core.autocrlf=true doesn't fail `pnpm format:check` on untouched files.
+* text=auto eol=lf

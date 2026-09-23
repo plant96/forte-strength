@@ -2,7 +2,10 @@ import "server-only"
 
 import { auth, currentUser } from "@clerk/nextjs/server"
 import { notFound, redirect } from "next/navigation"
+import { after } from "next/server"
 import { cache } from "react"
+
+import { onUserCreated } from "@/features/notifications/notify"
 
 import { db } from "./db"
 
@@ -29,7 +32,7 @@ export const getCurrentUser = cache(async () => {
   const clerkUser = await currentUser()
   if (!clerkUser) return null
 
-  return db.user.upsert({
+  const created = await db.user.upsert({
     where: { clerkId: userId },
     update: {},
     create: {
@@ -38,9 +41,15 @@ export const getCurrentUser = cache(async () => {
       firstName: clerkUser.firstName,
       lastName: clerkUser.lastName,
       imageUrl: clerkUser.imageUrl,
+      // Stamped by the sign-up page when they arrived via /sign-up?onboarding=required.
+      onboardingRequired: clerkUser.unsafeMetadata?.onboardingRequired === true,
     },
     include: { profile: true },
   })
+
+  // First sight of this account: tell the coach, after the response has gone out.
+  after(() => onUserCreated(created))
+  return created
 })
 
 export type CurrentUser = NonNullable<Awaited<ReturnType<typeof getCurrentUser>>>
@@ -52,8 +61,10 @@ export async function syncCurrentUser(user: CurrentUser) {
 
   const next = {
     email: primaryEmail(clerkUser),
-    firstName: clerkUser.firstName,
-    lastName: clerkUser.lastName,
+    // Names can be set here without Clerk knowing (the onboarding name step mirrors them
+    // best-effort), so an empty Clerk name never erases one we already have.
+    firstName: clerkUser.firstName?.trim() ? clerkUser.firstName : user.firstName,
+    lastName: clerkUser.lastName?.trim() ? clerkUser.lastName : user.lastName,
     imageUrl: clerkUser.imageUrl,
   }
   const changed =
@@ -87,6 +98,16 @@ export function isAdmin(user: { role: string } | null | undefined) {
 /** True once the coach has marked the account as a coaching client. */
 export function isClient(user: { clientSince: Date | null } | null | undefined) {
   return user?.clientSince != null
+}
+
+/**
+ * True while an account that signed up through `/sign-up?onboarding=required` still
+ * hasn't finished the wizard. The site is confined to `/onboarding` until then.
+ */
+export function isLockedToOnboarding(
+  user: { onboardingRequired: boolean; onboardedAt: Date | null } | null | undefined,
+) {
+  return Boolean(user?.onboardingRequired && !user.onboardedAt)
 }
 
 /**

@@ -19,6 +19,7 @@ import {
   RoleBadge,
 } from "@/features/admin/components/user-badges"
 import { UserClientToggle } from "@/features/admin/components/user-client-toggle"
+import { UserDeletePanel } from "@/features/admin/components/user-delete-panel"
 import { Button } from "@/components/ui/button"
 import { getUserDetail } from "@/features/admin/queries"
 import { ageOn, dateToBirthday, formatBirthday } from "@/features/profile/lib/birthday"
@@ -27,13 +28,17 @@ import { getIntensityLevel, type IntensityId } from "@/features/tdee/lib/constan
 import { calculateTdee } from "@/features/tdee/lib/tdee"
 import { formatDate, formatRelative } from "@/lib/dates"
 import { cmToFtIn, roundTo } from "@/lib/units"
+import { requireAdmin } from "@/server/auth"
 
 export const metadata: Metadata = { title: "Website user" }
 
 export default async function AdminUserPage(props: PageProps<"/admin/users/[id]">) {
+  const admin = await requireAdmin()
   const { id } = await props.params
   const user = await getUserDetail(id)
   if (!user) notFound()
+  // Never yourself, never another admin: those are handled by changing roles, deliberately.
+  const canDelete = user.id !== admin.id && user.role !== "ADMIN"
 
   const profile = user.profile
   const result = profile ? calculateTdee(profileRecordToTdeeInput(profile)) : null
@@ -80,7 +85,11 @@ export default async function AdminUserPage(props: PageProps<"/admin/users/[id]"
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <OnboardingBadge onboardedAt={user.onboardedAt} skippedAt={user.onboardingSkippedAt} />
+          <OnboardingBadge
+            onboardedAt={user.onboardedAt}
+            skippedAt={user.onboardingSkippedAt}
+            required={user.onboardingRequired}
+          />
           <Button asChild variant="outline" className="h-10">
             <Link href={`/admin/users/${user.id}/prs`}>
               <TrophyIcon />
@@ -138,6 +147,8 @@ export default async function AdminUserPage(props: PageProps<"/admin/users/[id]"
           description="This user hasn't saved their stats yet."
         />
       )}
+
+      {canDelete && <UserDeletePanel id={user.id} name={displayName(user)} />}
     </div>
   )
 }

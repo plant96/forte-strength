@@ -20,6 +20,16 @@ export function parseApplicationFilters(params: RawSearchParams) {
   }
 }
 
+export type BugReportStatusFilter = "open" | "archived"
+
+export function parseBugReportFilters(params: RawSearchParams) {
+  const page = Number.parseInt(first(params.page) ?? "1", 10)
+  return {
+    status: (first(params.status) === "archived" ? "archived" : "open") as BugReportStatusFilter,
+    page: Number.isFinite(page) && page > 0 ? page : 1,
+  }
+}
+
 export function parseUserFilters(params: RawSearchParams) {
   const page = Number.parseInt(first(params.page) ?? "1", 10)
   return {

@@ -54,6 +54,10 @@ model User {
   role                Role       @default(USER)
   onboardedAt         DateTime?
   onboardingSkippedAt DateTime?
+  /// True when they signed up through `/sign-up?onboarding=required` (read from Clerk's
+  /// unsafeMetadata at first sight). Until `onboardedAt` is set, the site is locked to
+  /// `/onboarding` and the wizard has no "Skip for now".
+  onboardingRequired  Boolean    @default(false)
   /// Set when the coach marks the account as a coaching client; null otherwise.
   clientSince         DateTime?
   /// How they read gym weights (plates, dumbbells, machines). Deliberately separate
@@ -187,6 +191,86 @@ model CoachProfile {
   homeBase        String
   reach           String[]
   updatedAt       DateTime @updatedAt
+}
+
+// ---------------------------------------------------------------------------
+// Coming soon (teasers the coach announces in the nav and on client dashboards)
+// ---------------------------------------------------------------------------
+
+enum ComingSoonKind {
+  TOOL
+  RESOURCE
+}
+
+/// A placeholder title shown, unclickable, under Tools or Resources to clients and admins.
+model ComingSoonItem {
+  id        String         @id @default(cuid())
+  kind      ComingSoonKind
+  title     String
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  @@index([kind, createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// Bug reports (from the footer's "Report a bug")
+// ---------------------------------------------------------------------------
+
+enum BugReportStatus {
+  OPEN
+  ARCHIVED
+}
+
+/// One "Report a bug" submission. `userId` and `email` are snapshots, not relations,
+/// so a report outlives the account that filed it.
+model BugReport {
+  id          String          @id @default(cuid())
+  status      BugReportStatus @default(OPEN)
+  archivedAt  DateTime?
+  createdAt   DateTime        @default(now())
+  userId      String?
+  email       String?
+  path        String
+  description String          @db.Text
+  userAgent   String?         @db.Text
+
+  @@index([status, createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// Coach email notifications (toggled in the admin panel)
+// ---------------------------------------------------------------------------
+
+/// One row per notification the coach has toggled. A missing row means the
+/// catalogue default applies (see `features/notifications/catalog.ts`).
+model NotificationPreference {
+  key       String   @id
+  enabled   Boolean
+  updatedAt DateTime @updatedAt
+}
+
+enum MilestoneKind {
+  VISITORS
+  USERS
+  ONLINE
+}
+
+/// Send-once ledger for milestone emails: a threshold is emailed at most once, ever.
+model NotificationMilestone {
+  kind      MilestoneKind
+  threshold Int
+  reachedAt DateTime      @default(now())
+
+  @@id([kind, threshold])
+}
+
+/// Lifetime unique visitors, by analytics cookie id only (no PII). Kept separately
+/// because `PageView` rows are purged after the retention window, which would make a
+/// lifetime count impossible to recover.
+model Visitor {
+  id          String   @id
+  firstSeenAt DateTime @default(now())
 }
 
 // ---------------------------------------------------------------------------

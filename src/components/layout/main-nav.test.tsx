@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event"
 import { describe, expect, it } from "vitest"
 
 import { MainNav } from "./main-nav"
+import { buildNavEntries, type NavAudience } from "./nav-entries"
 
 /**
  * Radix's navigation menu opens after a 200ms hover delay and closes after a 150ms
@@ -10,9 +11,10 @@ import { MainNav } from "./main-nav"
  * task. These run on real timers — userEvent deadlocks against Vitest's fake ones —
  * so the assertions poll instead.
  */
-function setup(unlocked = true) {
+function setup(unlocked = true, audience: Partial<NavAudience> = {}) {
   const user = userEvent.setup()
-  render(<MainNav unlocked={unlocked} />)
+  const entries = buildNavEntries({ client: false, unlocked, comingSoon: null, ...audience })
+  render(<MainNav entries={entries} unlocked={unlocked} />)
   return user
 }
 
@@ -160,5 +162,26 @@ describe("MainNav client-only entries", () => {
 
     await screen.findByRole("link", { name: /Mobility Vault/ })
     expect(screen.queryByText("Clients")).not.toBeInTheDocument()
+  })
+
+  it("shows Dashboard instead of Coaching for a client", () => {
+    setup(true, { client: true })
+
+    expect(screen.getByRole("link", { name: "Dashboard" })).toHaveAttribute("href", "/dashboard")
+    expect(screen.queryByRole("link", { name: "Coaching" })).not.toBeInTheDocument()
+  })
+
+  it("lists a coming-soon teaser as text, not a link", async () => {
+    const user = setup(true, {
+      client: true,
+      comingSoon: { tools: [{ id: "t1", title: "Meet Planner" }], resources: [] },
+    })
+
+    await user.click(tools())
+    await opens(tools)
+
+    expect(await screen.findByText("Meet Planner")).toBeInTheDocument()
+    expect(screen.queryByRole("link", { name: /Meet Planner/ })).not.toBeInTheDocument()
+    expect(screen.getByText("Soon")).toBeInTheDocument()
   })
 })

@@ -2,7 +2,12 @@ import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server"
 
 // Pages that need a signed-in user. Admin access is also checked against the
 // database role on the server, so being signed in alone never unlocks /admin.
-const isProtectedRoute = createRouteMatcher(["/onboarding(.*)", "/profile(.*)", "/admin(.*)"])
+const isProtectedRoute = createRouteMatcher([
+  "/onboarding(.*)",
+  "/profile(.*)",
+  "/dashboard(.*)",
+  "/admin(.*)",
+])
 
 export default clerkMiddleware(
   async (auth, request) => {

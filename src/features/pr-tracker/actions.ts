@@ -1,7 +1,9 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
+import { after } from "next/server"
 
+import { notifyClientPr } from "@/features/notifications/notify"
 import { WEIGHT_UNIT_TO_DB } from "@/features/profile/mappers"
 import { getClientAreaUser, getCurrentUser, isAdmin } from "@/server/auth"
 import { db } from "@/server/db"
@@ -300,6 +302,19 @@ export async function addPrEntry(input: unknown): Promise<AddEntryResult> {
     }
 
     revalidateFor(actor)
+
+    // The coach hears about records the athlete logged themselves, not their own entries.
+    if (actor.loggedById === null) {
+      after(() =>
+        notifyClientPr({
+          athleteId: actor.athleteId,
+          exerciseName: exercise.name,
+          shape,
+          weightKg,
+          previousKg: outcome.previousKg,
+        }),
+      )
+    }
 
     return {
       ok: true,

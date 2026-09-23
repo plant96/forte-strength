@@ -1,4 +1,4 @@
-import { CheckIcon, HandshakeIcon, ShieldCheckIcon } from "lucide-react"
+import { CheckIcon, HandshakeIcon, LockIcon, ShieldCheckIcon } from "lucide-react"
 import Image from "next/image"
 
 /** A website user the coach has marked as a coaching client. */
@@ -14,15 +14,26 @@ export function ClientBadge() {
 export function OnboardingBadge({
   onboardedAt,
   skippedAt,
+  required = false,
 }: {
   onboardedAt: Date | null
   skippedAt: Date | null
+  /** Signed up through the onboarding-required link and is confined to the wizard until done. */
+  required?: boolean
 }) {
   if (onboardedAt) {
     return (
       <span className="inline-flex items-center gap-1 rounded-full bg-primary/15 px-2 py-0.5 text-xs font-medium whitespace-nowrap text-highlight">
         <CheckIcon className="size-3" aria-hidden="true" />
         Profile complete
+      </span>
+    )
+  }
+  if (required) {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-primary/15 px-2 py-0.5 text-xs font-medium whitespace-nowrap text-highlight ring-1 ring-primary/30">
+        <LockIcon className="size-3" aria-hidden="true" />
+        Setup required
       </span>
     )
   }

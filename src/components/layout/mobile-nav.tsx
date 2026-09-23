@@ -2,12 +2,20 @@
 
 import { useAuth } from "@clerk/nextjs"
 import { cn } from "cn"
-import { LockIcon, MenuIcon, ShieldCheckIcon, UserRoundIcon } from "lucide-react"
+import {
+  LayoutDashboardIcon,
+  LockIcon,
+  MenuIcon,
+  ShieldCheckIcon,
+  SparklesIcon,
+  UserRoundIcon,
+} from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useState } from "react"
 
 import { Logo } from "@/components/brand/logo"
+import { SoonBadge } from "@/components/soon-badge"
 import { Button } from "@/components/ui/button"
 import {
   Sheet,
@@ -17,12 +25,20 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
-import { isNavMenu, LOCKED_NAV_HINT, siteConfig } from "@/config/site"
+import { DASHBOARD_NAV, LOCKED_NAV_HINT, siteConfig } from "@/config/site"
 
+import { isNavMenuView, type NavEntryView } from "./nav-entries"
 import { isActivePath, NAV_ICONS } from "./nav-icons"
 
+interface MobileNavProps {
+  entries: readonly NavEntryView[]
+  isAdmin: boolean
+  unlocked: boolean
+  client: boolean
+}
+
 /** Slide-out navigation for small screens. */
-export function MobileNav({ isAdmin, unlocked }: { isAdmin: boolean; unlocked: boolean }) {
+export function MobileNav({ entries, isAdmin, unlocked, client }: MobileNavProps) {
   const [open, setOpen] = useState(false)
   const pathname = usePathname()
   const { isSignedIn } = useAuth()
@@ -33,6 +49,8 @@ export function MobileNav({ isAdmin, unlocked }: { isAdmin: boolean; unlocked: b
       "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors hover:bg-muted/60",
       isActivePath(pathname, href) ? "bg-muted/60 text-foreground" : "text-muted-foreground",
     )
+
+  const cta = client ? DASHBOARD_NAV : { ...siteConfig.cta, title: "Apply for coaching" }
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -56,8 +74,8 @@ export function MobileNav({ isAdmin, unlocked }: { isAdmin: boolean; unlocked: b
 
         <nav aria-label="Mobile" className="flex flex-1 flex-col gap-6 overflow-y-auto px-3 py-5">
           <div className="flex flex-col gap-1">
-            {siteConfig.mainNav.map((entry) =>
-              isNavMenu(entry) ? (
+            {entries.map((entry) =>
+              isNavMenuView(entry) ? (
                 <div key={entry.title} className="flex flex-col gap-1 pt-2">
                   <p className="px-3 pb-1 font-heading text-xs font-semibold tracking-[0.2em] text-muted-foreground uppercase">
                     {entry.title}
@@ -70,7 +88,7 @@ export function MobileNav({ isAdmin, unlocked }: { isAdmin: boolean; unlocked: b
                         key={item.href}
                         href={item.href}
                         onClick={close}
-                        aria-label={locked ? item.title + " \u2014 " + LOCKED_NAV_HINT : undefined}
+                        aria-label={locked ? item.title + " — " + LOCKED_NAV_HINT : undefined}
                         className={cn(linkClass(item.href), locked && "text-muted-foreground")}
                       >
                         {Icon && (
@@ -86,6 +104,17 @@ export function MobileNav({ isAdmin, unlocked }: { isAdmin: boolean; unlocked: b
                       </Link>
                     )
                   })}
+                  {entry.comingSoon.map((item) => (
+                    <div
+                      key={item.id}
+                      aria-disabled="true"
+                      className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground"
+                    >
+                      <SparklesIcon className="size-4" />
+                      {item.title}
+                      <SoonBadge />
+                    </div>
+                  ))}
                 </div>
               ) : (
                 <Link
@@ -102,12 +131,22 @@ export function MobileNav({ isAdmin, unlocked }: { isAdmin: boolean; unlocked: b
 
           <div className="flex flex-col gap-2 border-t border-border pt-5">
             <Button asChild size="lg" className="h-11 font-heading tracking-wider uppercase">
-              <Link href={siteConfig.cta.href} onClick={close}>
-                Apply for coaching
+              <Link href={cta.href} onClick={close}>
+                {cta.title}
               </Link>
             </Button>
             {isSignedIn ? (
               <>
+                {(client || isAdmin) && (
+                  <Link
+                    href={DASHBOARD_NAV.href}
+                    onClick={close}
+                    className={linkClass(DASHBOARD_NAV.href)}
+                  >
+                    <LayoutDashboardIcon className="size-4 text-highlight" />
+                    Dashboard
+                  </Link>
+                )}
                 <Link href="/profile" onClick={close} className={linkClass("/profile")}>
                   <UserRoundIcon className="size-4" />
                   Profile &amp; settings

@@ -2,11 +2,14 @@
 
 import { cn } from "cn"
 import {
+  BellIcon,
+  BugIcon,
   ChartNoAxesCombinedIcon,
   HandshakeIcon,
   InboxIcon,
   LayoutDashboardIcon,
   MedalIcon,
+  SparklesIcon,
   UsersRoundIcon,
   type LucideIcon,
 } from "lucide-react"
@@ -17,12 +20,16 @@ const ITEMS: { href: string; label: string; icon: LucideIcon; exact?: boolean }[
   { href: "/admin", label: "Overview", icon: LayoutDashboardIcon, exact: true },
   { href: "/admin/analytics", label: "Analytics", icon: ChartNoAxesCombinedIcon },
   { href: "/admin/applications", label: "Applications", icon: InboxIcon },
+  { href: "/admin/bug-reports", label: "Bug reports", icon: BugIcon },
   { href: "/admin/users", label: "Website users", icon: UsersRoundIcon },
   { href: "/admin/clients", label: "Clients", icon: HandshakeIcon },
   { href: "/admin/coach", label: "Coach profile", icon: MedalIcon },
+  { href: "/admin/coming-soon", label: "Coming soon", icon: SparklesIcon },
+  { href: "/admin/notifications", label: "Notifications", icon: BellIcon },
 ]
 
-export function AdminNav({ unprocessed }: { unprocessed: number }) {
+/** `badges` maps an item's href to the count shown beside it (zero hides it). */
+export function AdminNav({ badges = {} }: { badges?: Partial<Record<string, number>> }) {
   const pathname = usePathname()
 
   return (
@@ -33,6 +40,7 @@ export function AdminNav({ unprocessed }: { unprocessed: number }) {
       <ul className="flex w-max gap-1 lg:w-full lg:flex-col">
         {ITEMS.map((item) => {
           const active = item.exact ? pathname === item.href : pathname.startsWith(item.href)
+          const badge = badges[item.href] ?? 0
           return (
             <li key={item.href}>
               <Link
@@ -47,9 +55,9 @@ export function AdminNav({ unprocessed }: { unprocessed: number }) {
               >
                 <item.icon className={cn("size-4", active && "text-highlight")} />
                 {item.label}
-                {item.href === "/admin/applications" && unprocessed > 0 && (
+                {badge > 0 && (
                   <span className="ml-auto rounded-full bg-primary px-1.5 py-0.5 text-[0.65rem] leading-none font-bold text-primary-foreground tabular-nums">
-                    {unprocessed}
+                    {badge}
                   </span>
                 )}
               </Link>

@@ -31,15 +31,23 @@ import {
   BIRTHDAY_FIELDS,
   PROFILE_FORM_DEFAULTS,
   profileFormSchema,
+  type NameFormInput,
   type ProfileFormInput,
   type ProfileFormValues,
 } from "../schema"
 import { BirthdayField } from "./birthday-field"
 import { LiftUnitField } from "./lift-unit-field"
+import { NameForm } from "./name-form"
 
 type ProfileForm = ReturnType<typeof useForm<ProfileFormInput, unknown, ProfileFormValues>>
 
 const STEPS = [
+  {
+    id: "name",
+    title: "Your name",
+    description: "So your coach knows who's who.",
+    fields: [],
+  },
   {
     id: "basics",
     title: "The basics",
@@ -66,7 +74,19 @@ const STEPS = [
   fields: ReadonlyArray<FieldPath<ProfileFormInput>>
 }>
 
-export function OnboardingWizard({ firstName }: { firstName: string | null }) {
+/** Step indices the review rows link back to. */
+const STEP_INDEX = { basics: 1, composition: 2, activity: 3 } as const
+
+interface OnboardingWizardProps {
+  firstName: string | null
+  lastName: string | null
+  /** Signed up through the onboarding-required link: the name is mandatory and there is no skipping. */
+  locked: boolean
+  /** Where "Finish setup" lands. */
+  doneHref: string
+}
+
+export function OnboardingWizard({ firstName, lastName, locked, doneHref }: OnboardingWizardProps) {
   const router = useRouter()
   const reduceMotion = useReducedMotion()
   const form = useForm<ProfileFormInput, unknown, ProfileFormValues>({
@@ -74,12 +94,17 @@ export function OnboardingWizard({ firstName }: { firstName: string | null }) {
     defaultValues: PROFILE_FORM_DEFAULTS,
     mode: "onTouched",
   })
+  const [name, setName] = useState<NameFormInput>({
+    firstName: firstName ?? "",
+    lastName: lastName ?? "",
+  })
   const [stepIndex, setStepIndex] = useState(0)
   const [highestStep, setHighestStep] = useState(0)
   const [isSaving, startSaving] = useTransition()
   const topRef = useRef<HTMLDivElement>(null)
 
   const step = STEPS[stepIndex] ?? STEPS[0]
+  const isName = step.id === "name"
   const isReview = step.id === "review"
 
   function goToStep(index: number) {
@@ -105,7 +130,10 @@ export function OnboardingWizard({ firstName }: { firstName: string | null }) {
         toast.success("You're all set", {
           description: "Your tools will fill themselves in from now on.",
         })
-        router.push("/tools/tdee-calculator")
+        // The save revalidated the layout; refreshing makes sure the header and the
+        // onboarding lock see the finished profile before we move on.
+        router.refresh()
+        router.push(doneHref)
         return
       }
       if (result.fieldErrors) {
@@ -129,10 +157,12 @@ export function OnboardingWizard({ firstName }: { firstName: string | null }) {
           Profile setup
         </p>
         <h1 className="font-heading text-4xl leading-[1.02] font-extrabold uppercase sm:text-5xl">
-          {firstName ? `Welcome, ${firstName}` : "Welcome"}
+          {name.firstName ? `Welcome, ${name.firstName}` : "Welcome"}
         </h1>
         <p className="text-muted-foreground">
-          Save your stats once and every Forte tool fills itself in. It takes about a minute.
+          {locked
+            ? "Your coach asked you to finish this before using the rest of the site. It takes about a minute."
+            : "Save your stats once and every Forte tool fills itself in. It takes about a minute."}
         </p>
       </header>
 
@@ -145,97 +175,144 @@ export function OnboardingWizard({ firstName }: { firstName: string | null }) {
       />
 
       <Card className="gap-0 py-0">
-        <form
-          noValidate
-          onSubmit={(event) => {
-            event.preventDefault()
-            if (isReview) finish()
-            else void goNext()
-          }}
-        >
-          <div className="flex flex-col gap-1 border-b border-border px-5 py-4 sm:px-6">
-            <h2 className="font-heading text-2xl font-bold uppercase">{step.title}</h2>
-            <p className="text-sm text-muted-foreground">{step.description}</p>
-          </div>
+        <div className="flex flex-col gap-1 border-b border-border px-5 py-4 sm:px-6">
+          <h2 className="font-heading text-2xl font-bold uppercase">{step.title}</h2>
+          <p className="text-sm text-muted-foreground">{step.description}</p>
+        </div>
 
-          <div className="@container p-5 sm:p-6">
-            <AnimatePresence mode="wait" initial={false}>
-              <m.div
-                key={step.id}
-                initial={{ opacity: 0, x: 24 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -24 }}
-                transition={{ duration: 0.2, ease: "easeOut" }}
-              >
-                {step.id === "basics" && (
-                  <FieldGroup className="gap-5">
-                    <BirthdayField form={form} />
-                    <SexField form={form} />
-                    <WeightField form={form} />
-                    <HeightField form={form} />
-                  </FieldGroup>
-                )}
-                {step.id === "composition" && <BodyFatField form={form} />}
-                {step.id === "activity" && (
-                  <FieldGroup className="gap-5">
-                    <div className="grid gap-5 @md:grid-cols-2">
-                      <StepsField form={form} />
-                      <SessionsField form={form} />
-                    </div>
-                    <IntensityField form={form} />
-                    <LiftUnitField form={form} />
-                  </FieldGroup>
-                )}
-                {isReview && <ReviewStep form={form} onEdit={goToStep} />}
-              </m.div>
-            </AnimatePresence>
-          </div>
+        {isName ? (
+          // Its own form: the profile steps below share one, and forms can't nest.
+          <NameForm
+            id="onboarding-name"
+            initialValues={name}
+            className="gap-0"
+            fieldsClassName="p-5 sm:p-6"
+            onSaved={(values) => {
+              setName(values)
+              goToStep(1)
+            }}
+            footer={({ pending }) => (
+              <WizardFooter pending={pending} stepIndex={stepIndex} onBack={goToStep} />
+            )}
+          />
+        ) : (
+          <form
+            id="onboarding-profile"
+            noValidate
+            onSubmit={(event) => {
+              event.preventDefault()
+              if (isReview) finish()
+              else void goNext()
+            }}
+          >
+            <div className="@container p-5 sm:p-6">
+              <AnimatePresence mode="wait" initial={false}>
+                <m.div
+                  key={step.id}
+                  initial={{ opacity: 0, x: 24 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -24 }}
+                  transition={{ duration: 0.2, ease: "easeOut" }}
+                >
+                  {step.id === "basics" && (
+                    <FieldGroup className="gap-5">
+                      <BirthdayField form={form} />
+                      <SexField form={form} />
+                      <WeightField form={form} />
+                      <HeightField form={form} />
+                    </FieldGroup>
+                  )}
+                  {step.id === "composition" && <BodyFatField form={form} />}
+                  {step.id === "activity" && (
+                    <FieldGroup className="gap-5">
+                      <div className="grid gap-5 @md:grid-cols-2">
+                        <StepsField form={form} />
+                        <SessionsField form={form} />
+                      </div>
+                      <IntensityField form={form} />
+                      <LiftUnitField form={form} />
+                    </FieldGroup>
+                  )}
+                  {isReview && <ReviewStep form={form} onEdit={goToStep} />}
+                </m.div>
+              </AnimatePresence>
+            </div>
 
-          <div className="flex items-center justify-between gap-3 border-t border-border px-5 py-4 sm:px-6">
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => goToStep(stepIndex - 1)}
-              disabled={stepIndex === 0 || isSaving}
-              className={stepIndex === 0 ? "invisible h-10" : "h-10"}
-            >
-              <ArrowLeftIcon />
-              Back
-            </Button>
-            <Button
-              type="submit"
-              size="lg"
-              disabled={isSaving}
-              className="h-11 min-w-36 font-heading text-base font-semibold tracking-wider uppercase"
-            >
-              {isReview ? (
-                isSaving ? (
-                  <>
-                    <Loader2Icon className="animate-spin" />
-                    Saving
-                  </>
-                ) : (
-                  <>
-                    <CheckIcon />
-                    Finish setup
-                  </>
-                )
-              ) : (
-                <>
-                  Continue
-                  <ArrowRightIcon />
-                </>
-              )}
-            </Button>
-          </div>
-        </form>
+            <WizardFooter
+              pending={isSaving}
+              stepIndex={stepIndex}
+              onBack={goToStep}
+              finishing={isReview}
+            />
+          </form>
+        )}
       </Card>
 
-      <form action={skipOnboarding} className="flex justify-center">
-        <Button type="submit" variant="link" className="text-muted-foreground">
-          Skip for now
-        </Button>
-      </form>
+      {!isName && !locked && (
+        <form action={skipOnboarding} className="flex justify-center">
+          <Button type="submit" variant="link" className="text-muted-foreground">
+            Skip for now
+          </Button>
+        </form>
+      )}
+    </div>
+  )
+}
+
+/** Back and Continue/Finish, rendered inside whichever form is active so submit works. */
+function WizardFooter({
+  pending,
+  stepIndex,
+  onBack,
+  finishing = false,
+}: {
+  pending: boolean
+  stepIndex: number
+  onBack: (step: number) => void
+  finishing?: boolean
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3 border-t border-border px-5 py-4 sm:px-6">
+      <Button
+        type="button"
+        variant="ghost"
+        onClick={() => onBack(stepIndex - 1)}
+        disabled={stepIndex === 0 || pending}
+        className={stepIndex === 0 ? "invisible h-10" : "h-10"}
+      >
+        <ArrowLeftIcon />
+        Back
+      </Button>
+      <Button
+        type="submit"
+        size="lg"
+        disabled={pending}
+        className="h-11 min-w-36 font-heading text-base font-semibold tracking-wider uppercase"
+      >
+        {finishing ? (
+          pending ? (
+            <>
+              <Loader2Icon className="animate-spin" />
+              Saving
+            </>
+          ) : (
+            <>
+              <CheckIcon />
+              Finish setup
+            </>
+          )
+        ) : pending ? (
+          <>
+            <Loader2Icon className="animate-spin" />
+            Saving
+          </>
+        ) : (
+          <>
+            Continue
+            <ArrowRightIcon />
+          </>
+        )}
+      </Button>
     </div>
   )
 }
@@ -262,15 +339,27 @@ function ReviewStep({ form, onEdit }: { form: ProfileForm; onEdit: (step: number
     {
       label: "Birthday",
       value: `${formatBirthday(profile.birthday)} (age ${ageOn(profile.birthday)})`,
-      step: 0,
+      step: STEP_INDEX.basics,
     },
-    { label: "Sex", value: profile.sex === "male" ? "Male" : "Female", step: 0 },
-    { label: "Bodyweight", value: `${profile.weight} ${profile.weightUnit}`, step: 0 },
-    { label: "Height", value: height, step: 0 },
-    { label: "Body fat", value: `${profile.bodyFat}%`, step: 1 },
-    { label: "Daily steps", value: profile.steps.toLocaleString("en-US"), step: 2 },
-    { label: "Sessions", value: `${profile.sessions} per week`, step: 2 },
-    { label: "Intensity", value: getIntensityLevel(profile.intensity).label, step: 2 },
+    { label: "Sex", value: profile.sex === "male" ? "Male" : "Female", step: STEP_INDEX.basics },
+    {
+      label: "Bodyweight",
+      value: `${profile.weight} ${profile.weightUnit}`,
+      step: STEP_INDEX.basics,
+    },
+    { label: "Height", value: height, step: STEP_INDEX.basics },
+    { label: "Body fat", value: `${profile.bodyFat}%`, step: STEP_INDEX.composition },
+    {
+      label: "Daily steps",
+      value: profile.steps.toLocaleString("en-US"),
+      step: STEP_INDEX.activity,
+    },
+    { label: "Sessions", value: `${profile.sessions} per week`, step: STEP_INDEX.activity },
+    {
+      label: "Intensity",
+      value: getIntensityLevel(profile.intensity).label,
+      step: STEP_INDEX.activity,
+    },
   ]
 
   return (

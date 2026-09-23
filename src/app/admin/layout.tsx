@@ -27,7 +27,12 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
               <span className="text-xs text-muted-foreground">Coach dashboard</span>
             </div>
           </div>
-          <AdminNav unprocessed={counts.unprocessed} />
+          <AdminNav
+            badges={{
+              "/admin/applications": counts.unprocessed,
+              "/admin/bug-reports": counts.bugReports,
+            }}
+          />
         </aside>
         <div className="min-w-0 flex-1">{children}</div>
       </div>

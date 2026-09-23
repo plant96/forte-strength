@@ -10,6 +10,7 @@ import {
 import { clientIpFrom, resolveLocation } from "@/features/analytics/lib/geo"
 import { maybePurgeExpiredVisits } from "@/features/analytics/retention"
 import { isBotAgent, parseBrowser, parseDevice, parseOs } from "@/features/analytics/lib/user-agent"
+import { checkOnlineMilestones, onNewVisitor } from "@/features/notifications/notify"
 import { db } from "@/server/db"
 
 /** A view, or the duration ping that closes one out. */
@@ -168,6 +169,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Could not record view" }, { status: 503 })
   }
   after(maybePurgeExpiredVisits)
+  // Coach milestones, checked after the response. Both swallow their own errors.
+  if (!row.isBot) {
+    if (!existingVisitor) after(() => onNewVisitor(visitorId))
+    after(checkOnlineMilestones)
+  }
 
   const response = NextResponse.json({ id })
   const secure = requestUrl.protocol === "https:"

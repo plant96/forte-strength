@@ -1,11 +1,12 @@
 "use client"
 
 import { cn } from "cn"
-import { LockIcon } from "lucide-react"
+import { LockIcon, SparklesIcon } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useRef, useState, type MouseEvent } from "react"
 
+import { SoonBadge } from "@/components/soon-badge"
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -15,8 +16,9 @@ import {
   NavigationMenuTrigger,
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu"
-import { isNavMenu, LOCKED_NAV_HINT, siteConfig } from "@/config/site"
+import { LOCKED_NAV_HINT } from "@/config/site"
 
+import { isNavMenuView, type NavEntryView } from "./nav-entries"
 import { isActivePath, NAV_ICONS } from "./nav-icons"
 
 const itemClass =
@@ -28,7 +30,8 @@ function menuValue(title: string) {
 }
 
 /**
- * Desktop navigation, built from `siteConfig.mainNav`.
+ * Desktop navigation, built from the entries the header assembled for this visitor
+ * (see `nav-entries.ts`).
  *
  * Menus open on hover, and clicking one pins it so it stays open once the pointer
  * leaves. Radix funnels every close through `onValueChange("")`, so pinning works by
@@ -36,7 +39,13 @@ function menuValue(title: string) {
  * leave Radix's own hover latches in a stale state. Every genuine dismissal (a second
  * click, Escape, an outside click, choosing a link) drops the pin first.
  */
-export function MainNav({ unlocked }: { unlocked: boolean }) {
+export function MainNav({
+  entries,
+  unlocked,
+}: {
+  entries: readonly NavEntryView[]
+  unlocked: boolean
+}) {
   const pathname = usePathname()
 
   const [openValue, setOpenValue] = useState("")
@@ -83,8 +92,8 @@ export function MainNav({ unlocked }: { unlocked: boolean }) {
       onValueChange={handleValueChange}
     >
       <NavigationMenuList className="gap-1">
-        {siteConfig.mainNav.map((entry) => {
-          if (!isNavMenu(entry)) {
+        {entries.map((entry) => {
+          if (!isNavMenuView(entry)) {
             const active = isActivePath(pathname, entry.href)
             return (
               <NavigationMenuItem key={entry.href}>
@@ -192,6 +201,28 @@ export function MainNav({ unlocked }: { unlocked: boolean }) {
                       </li>
                     )
                   })}
+                  {/* Teasers: not links, because there is nowhere to go yet. */}
+                  {entry.comingSoon.map((item) => (
+                    <li key={item.id}>
+                      <div
+                        aria-disabled="true"
+                        className="flex cursor-default items-start gap-3 rounded-lg p-3"
+                      >
+                        <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground">
+                          <SparklesIcon className="size-4.5" />
+                        </span>
+                        <span className="flex flex-col gap-0.5">
+                          <span className="flex items-center gap-1.5 font-medium text-muted-foreground">
+                            {item.title}
+                            <SoonBadge />
+                          </span>
+                          <span className="text-xs leading-snug text-muted-foreground">
+                            Coming soon
+                          </span>
+                        </span>
+                      </div>
+                    </li>
+                  ))}
                 </ul>
               </NavigationMenuContent>
             </NavigationMenuItem>

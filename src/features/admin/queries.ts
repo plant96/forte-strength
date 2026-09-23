@@ -5,7 +5,11 @@ import { cache } from "react"
 import type { Prisma } from "@/generated/prisma/client"
 import { db } from "@/server/db"
 
-import { PAGE_SIZE, type ApplicationStatusFilter } from "./search-params"
+import {
+  PAGE_SIZE,
+  type ApplicationStatusFilter,
+  type BugReportStatusFilter,
+} from "./search-params"
 
 function applicationWhere(
   q: string,
@@ -28,12 +32,13 @@ function applicationWhere(
 
 /** Deduplicated per request (the layout and overview both need it). */
 export const getAdminCounts = cache(async () => {
-  const [unprocessed, processed, users, onboarded, clients] = await db.$transaction([
+  const [unprocessed, processed, users, onboarded, clients, bugReports] = await db.$transaction([
     db.application.count({ where: { status: "UNPROCESSED" } }),
     db.application.count({ where: { status: "PROCESSED" } }),
     db.user.count(),
     db.user.count({ where: { onboardedAt: { not: null } } }),
     db.user.count({ where: { clientSince: { not: null } } }),
+    db.bugReport.count({ where: { status: "OPEN" } }),
   ])
   return {
     unprocessed,
@@ -42,8 +47,52 @@ export const getAdminCounts = cache(async () => {
     users,
     onboarded,
     clients,
+    /** Open (not yet archived) bug reports. */
+    bugReports,
   }
 })
+
+/** Bug reports in one state, newest first, with who filed them when the account still exists. */
+export async function listBugReports({
+  status,
+  page,
+}: {
+  status: BugReportStatusFilter
+  page: number
+}) {
+  const [rows, open, archived] = await db.$transaction([
+    db.bugReport.findMany({
+      where: { status: status === "archived" ? "ARCHIVED" : "OPEN" },
+      orderBy: { createdAt: "desc" },
+      skip: (page - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
+    }),
+    db.bugReport.count({ where: { status: "OPEN" } }),
+    db.bugReport.count({ where: { status: "ARCHIVED" } }),
+  ])
+
+  const userIds = [...new Set(rows.flatMap((row) => (row.userId ? [row.userId] : [])))]
+  const users = userIds.length
+    ? await db.user.findMany({
+        where: { id: { in: userIds } },
+        select: { id: true, firstName: true, lastName: true, email: true },
+      })
+    : []
+  const byId = new Map(users.map((user) => [user.id, user]))
+
+  const items = rows.map((row) => ({
+    ...row,
+    reporter: row.userId ? (byId.get(row.userId) ?? null) : null,
+  }))
+  const total = status === "archived" ? archived : open
+  return {
+    items,
+    pageCount: Math.max(1, Math.ceil(total / PAGE_SIZE)),
+    counts: { open, archived },
+  }
+}
+
+export type BugReportListItem = Awaited<ReturnType<typeof listBugReports>>["items"][number]
 
 export async function getRecentActivity() {
   const [applications, users] = await db.$transaction([
@@ -180,6 +229,7 @@ export async function listUsers({
         role: true,
         onboardedAt: true,
         onboardingSkippedAt: true,
+        onboardingRequired: true,
         clientSince: true,
         createdAt: true,
       },

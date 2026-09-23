@@ -8,6 +8,12 @@ import { db } from "@/server/db"
 import type { WeightUnit } from "@/lib/units"
 
 import { toDay, type Day } from "@/lib/day"
+import {
+  classifyCompetitionLift,
+  emptyBestLifts,
+  isBestLiftReps,
+  type BestLifts,
+} from "./lib/lifts"
 import { currentRecord } from "./lib/records"
 import { seriesKey, type PrKind, type SeriesShape } from "./lib/series"
 import { PR_KIND_FROM_DB, PR_KIND_TO_DB } from "./mappers"
@@ -264,6 +270,55 @@ export async function getTrackerSummary(userId: string): Promise<TrackerSummary>
 /** The current record on a series, for the "you need to beat X" hint while typing. */
 export function seriesRecord(series: Pick<SeriesView, "entries">) {
   return currentRecord(series.entries)
+}
+
+/**
+ * The dashboard's best-lifts table: the heaviest 1, 2 and 3 rep max on the competition
+ * squat, bench and deadlift, across every movement that counts as one (see
+ * `classifyCompetitionLift`). When "Squat" and "Back Squat" both exist, the heavier wins
+ * and the cell says which it was.
+ */
+export async function getBestLifts(userId: string): Promise<BestLifts> {
+  const series = await db.prSeries.findMany({
+    where: {
+      userId,
+      OR: [{ kind: "ONE_REP_MAX" }, { kind: "REP", sets: 1, reps: { in: [2, 3] } }],
+    },
+    select: {
+      kind: true,
+      sets: true,
+      reps: true,
+      exercise: { select: { name: true, slug: true } },
+      entries: {
+        orderBy: { weightKg: "desc" },
+        take: 1,
+        select: { weightKg: true, achievedOn: true },
+      },
+    },
+  })
+
+  const result = emptyBestLifts()
+  for (const row of series) {
+    const best = row.entries[0]
+    if (!best) continue
+    const lift = classifyCompetitionLift(row.exercise.name)
+    if (!lift) continue
+    const reps = row.kind === "ONE_REP_MAX" ? 1 : row.reps
+    if (!isBestLiftReps(reps)) continue
+
+    const current = result.lifts[lift][reps]
+    if (current && current.weightKg >= best.weightKg) continue
+
+    const shape: SeriesShape = { kind: PR_KIND_FROM_DB[row.kind], sets: row.sets, reps: row.reps }
+    result.lifts[lift][reps] = {
+      weightKg: best.weightKg,
+      exerciseName: row.exercise.name,
+      achievedOn: toDay(best.achievedOn),
+      href: `/tools/pr-tracker/${row.exercise.slug}/${seriesKey(shape)}`,
+    }
+    result.hasAny = true
+  }
+  return result
 }
 
 export type { PrKind }

@@ -6,7 +6,9 @@ import { cn } from "cn"
 import type { Metadata, Viewport } from "next"
 import { Geist, Geist_Mono, Saira_Condensed } from "next/font/google"
 
+import { NameRequiredGate } from "@/components/layout/name-required-gate"
 import { OnboardingBanner } from "@/components/layout/onboarding-banner"
+import { OnboardingLockGate } from "@/components/layout/onboarding-lock-gate"
 import { SiteFooter } from "@/components/layout/site-footer"
 import { SiteHeader } from "@/components/layout/site-header"
 import { MotionProvider } from "@/components/motion/motion-provider"
@@ -77,9 +79,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <MotionProvider>
             <SiteHeader />
             <OnboardingBanner />
-            <main className="flex-1">{children}</main>
+            <main className="flex-1">
+              <OnboardingLockGate>{children}</OnboardingLockGate>
+            </main>
             <SiteFooter />
           </MotionProvider>
+          <NameRequiredGate />
           <Toaster position="bottom-right" />
           <AnalyticsBeacon />
         </body>
