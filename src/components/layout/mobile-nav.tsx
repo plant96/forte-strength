@@ -2,14 +2,7 @@
 
 import { useAuth } from "@clerk/nextjs"
 import { cn } from "cn"
-import {
-  LayoutDashboardIcon,
-  LockIcon,
-  MenuIcon,
-  ShieldCheckIcon,
-  SparklesIcon,
-  UserRoundIcon,
-} from "lucide-react"
+import { LockIcon, MenuIcon, ShieldCheckIcon, SparklesIcon, UserRoundIcon } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useState } from "react"
@@ -25,7 +18,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
-import { DASHBOARD_NAV, LOCKED_NAV_HINT, siteConfig } from "@/config/site"
+import { LOCKED_NAV_HINT, siteConfig } from "@/config/site"
 
 import { isNavMenuView, type NavEntryView } from "./nav-entries"
 import { isActivePath, NAV_ICONS } from "./nav-icons"
@@ -49,8 +42,6 @@ export function MobileNav({ entries, isAdmin, unlocked, client }: MobileNavProps
       "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors hover:bg-muted/60",
       isActivePath(pathname, href) ? "bg-muted/60 text-foreground" : "text-muted-foreground",
     )
-
-  const cta = client ? DASHBOARD_NAV : { ...siteConfig.cta, title: "Apply for coaching" }
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -130,23 +121,16 @@ export function MobileNav({ entries, isAdmin, unlocked, client }: MobileNavProps
           </div>
 
           <div className="flex flex-col gap-2 border-t border-border pt-5">
-            <Button asChild size="lg" className="h-11 font-heading tracking-wider uppercase">
-              <Link href={cta.href} onClick={close}>
-                {cta.title}
-              </Link>
-            </Button>
+            {/* Clients have nothing to apply for; Dashboard is already in the list above. */}
+            {!client && (
+              <Button asChild size="lg" className="h-11 font-heading tracking-wider uppercase">
+                <Link href={siteConfig.cta.href} onClick={close}>
+                  Apply for coaching
+                </Link>
+              </Button>
+            )}
             {isSignedIn ? (
               <>
-                {(client || isAdmin) && (
-                  <Link
-                    href={DASHBOARD_NAV.href}
-                    onClick={close}
-                    className={linkClass(DASHBOARD_NAV.href)}
-                  >
-                    <LayoutDashboardIcon className="size-4 text-highlight" />
-                    Dashboard
-                  </Link>
-                )}
                 <Link href="/profile" onClick={close} className={linkClass("/profile")}>
                   <UserRoundIcon className="size-4" />
                   Profile &amp; settings

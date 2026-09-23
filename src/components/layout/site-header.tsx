@@ -98,7 +98,6 @@ export async function SiteHeader() {
 
   const entries = buildNavEntries({ client, unlocked, comingSoon })
   const homeHref = client ? DASHBOARD_NAV.href : "/"
-  const cta = client ? DASHBOARD_NAV : siteConfig.cta
 
   return (
     <header className={headerClass}>
@@ -129,13 +128,16 @@ export async function SiteHeader() {
               </Link>
             </Button>
           )}
-          <Button
-            asChild
-            size="sm"
-            className="hidden font-heading tracking-wider uppercase sm:inline-flex"
-          >
-            <Link href={cta.href}>{cta.title}</Link>
-          </Button>
+          {/* Clients have nothing to apply for, and the nav already takes them home. */}
+          {!client && (
+            <Button
+              asChild
+              size="sm"
+              className="hidden font-heading tracking-wider uppercase sm:inline-flex"
+            >
+              <Link href={siteConfig.cta.href}>{siteConfig.cta.title}</Link>
+            </Button>
+          )}
           <UserMenu isAdmin={admin} client={client} />
           <MobileNav entries={entries} isAdmin={admin} unlocked={unlocked} client={client} />
         </div>
