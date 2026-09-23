@@ -1,6 +1,8 @@
 import type { Day } from "@/lib/day"
 
 import { findCatalogEntry } from "../catalog"
+import { addPrefillHref } from "./prefill"
+import type { SeriesShape } from "./series"
 import { compactName } from "./slug"
 
 /**
@@ -60,6 +62,27 @@ export function emptyBestLifts(): BestLifts {
 
 export function isBestLiftReps(reps: number): reps is BestLiftReps {
   return reps === 1 || reps === 2 || reps === 3
+}
+
+/** The catalogue movement to start with when a row has nothing tracked yet. */
+export const COMPETITION_LIFT_MOVEMENTS: Record<CompetitionLift, string> = {
+  squat: "Squat",
+  bench: "Bench Press",
+  deadlift: "Deadlift",
+}
+
+/**
+ * Where an empty best-lift cell sends the lifter: the Add panel with the movement and PR
+ * type already chosen. Continues a movement they track in that row when there is one.
+ */
+export function bestLiftAddHref(
+  lift: CompetitionLift,
+  reps: BestLiftReps,
+  movement: string = COMPETITION_LIFT_MOVEMENTS[lift],
+) {
+  const shape: SeriesShape =
+    reps === 1 ? { kind: "one-rep-max", sets: 1, reps: 1 } : { kind: "rep", sets: 1, reps }
+  return addPrefillHref("/tools/pr-tracker", movement, shape)
 }
 
 /** Catalogue slugs that are the competition lift, not a variation of it. */

@@ -10,6 +10,7 @@ import {
   BEST_LIFT_REPS,
   COMPETITION_LIFT_LABELS,
   COMPETITION_LIFTS,
+  bestLiftAddHref,
   type BestLift,
   type BestLiftReps,
   type BestLifts,
@@ -46,7 +47,7 @@ export function BestLiftsTable({ lifts, unit }: { lifts: BestLifts; unit: Weight
         // A single light sweep across the card once it has landed.
         <m.div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-transparent via-primary/10 to-transparent"
+          className="pointer-events-none absolute inset-y-0 left-0 w-1/3 bg-linear-to-r from-transparent via-primary/10 to-transparent"
           initial={{ x: "-100%" }}
           animate={{ x: "400%" }}
           transition={{ duration: 1.4, delay: 0.6, ease: "easeInOut" }}
@@ -81,8 +82,10 @@ function LiftGrid({ lifts, unit }: { lifts: BestLifts; unit: WeightUnit }) {
     <div className="flex flex-col gap-4 p-4 sm:p-6">
       <m.div variants={stagger(0.1, 0.15)} role="table" aria-label="Best lifts">
         <div role="row" className={gridClass}>
-          <span role="columnheader" className="sr-only">
-            Lift
+          {/* A real grid cell: `sr-only` is absolutely positioned and would drop out of the
+              grid, shifting every header one column left. */}
+          <span role="columnheader">
+            <span className="sr-only">Lift</span>
           </span>
           {BEST_LIFT_REPS.map((reps) => (
             <span
@@ -116,6 +119,7 @@ function LiftGrid({ lifts, unit }: { lifts: BestLifts; unit: WeightUnit }) {
                 lift={lift}
                 reps={reps}
                 best={lifts.lifts[lift][reps]}
+                movement={trackedMovement(lifts, lift)}
                 unit={unit}
               />
             ))}
@@ -137,15 +141,26 @@ function LiftGrid({ lifts, unit }: { lifts: BestLifts; unit: WeightUnit }) {
   )
 }
 
+/**
+ * A movement already tracked somewhere in this row, so an empty cell continues it
+ * rather than starting a plain "Squat" beside their "Back Squat".
+ */
+function trackedMovement(lifts: BestLifts, lift: CompetitionLift) {
+  return BEST_LIFT_REPS.map((reps) => lifts.lifts[lift][reps]).find((best) => best !== null)
+    ?.exerciseName
+}
+
 function LiftCell({
   lift,
   reps,
   best,
+  movement,
   unit,
 }: {
   lift: CompetitionLift
   reps: BestLiftReps
   best: BestLift | null
+  movement: string | undefined
   unit: WeightUnit
 }) {
   const label = COMPETITION_LIFT_LABELS[lift]
@@ -154,17 +169,14 @@ function LiftCell({
     return (
       <div role="cell" className="flex justify-center">
         <Link
-          href={ADD_HREF}
+          // Lands on the Add panel with movement and PR type chosen: only weight and date left.
+          href={bestLiftAddHref(lift, reps, movement)}
           aria-label={`Log a ${reps}-rep ${label.toLowerCase()} PR`}
-          className="group flex h-14 w-full max-w-28 flex-col items-center justify-center rounded-xl border border-dashed border-border text-muted-foreground transition-colors hover:border-primary/40 hover:text-highlight focus-visible:border-primary/40 focus-visible:text-highlight"
+          className="flex h-14 w-full max-w-28 flex-col items-center justify-center gap-0.5 rounded-xl border border-dashed border-border text-muted-foreground transition-colors hover:border-primary/40 hover:bg-primary/5 hover:text-highlight focus-visible:border-primary/40 focus-visible:text-highlight"
         >
-          <span aria-hidden="true" className="font-heading text-2xl leading-none">
-            —
-          </span>
-          <span className="flex items-center gap-0.5 text-[10px] tracking-wider uppercase opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
-            <PlusIcon className="size-3" />
-            Log
-          </span>
+          {/* Always visible: on a phone there is no hover to reveal it. */}
+          <PlusIcon className="size-4" aria-hidden="true" />
+          <span className="text-[10px] font-medium tracking-wider uppercase">Log PR</span>
         </Link>
       </div>
     )

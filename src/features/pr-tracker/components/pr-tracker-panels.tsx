@@ -7,6 +7,7 @@ import { useState } from "react"
 
 import type { WeightUnit } from "@/lib/units"
 
+import type { AddPrefill } from "../lib/prefill"
 import type { ExerciseListItem } from "../queries"
 import { AddPanel } from "./add/add-panel"
 import { ViewPanel } from "./view/view-panel"
@@ -41,6 +42,8 @@ interface PrTrackerPanelsProps {
   summary?: React.ReactNode
   /** The admin page sits inside its own chrome and wants a tighter switch. */
   compact?: boolean
+  /** Opens the Add panel with the movement and PR type already chosen (see `lib/prefill.ts`). */
+  prefill?: AddPrefill
 }
 
 export function PrTrackerPanels({
@@ -51,6 +54,7 @@ export function PrTrackerPanels({
   athleteId,
   summary,
   compact = false,
+  prefill,
 }: PrTrackerPanelsProps) {
   const [panel, setPanel] = useState<Panel>(initialPanel)
   // Bumped to remount the View panel, which is how "take me back" is expressed: its
@@ -113,7 +117,13 @@ export function PrTrackerPanels({
       </nav>
 
       {panel === "add" ? (
-        <AddPanel exercises={exercises} unit={unit} basePath={basePath} athleteId={athleteId} />
+        <AddPanel
+          exercises={exercises}
+          unit={unit}
+          basePath={basePath}
+          athleteId={athleteId}
+          prefill={prefill}
+        />
       ) : (
         <ViewPanel
           key={viewKey}

@@ -1,13 +1,20 @@
 "use client"
 
 import { cn } from "cn"
+import { Loader2Icon } from "lucide-react"
 import { AnimatePresence, m } from "motion/react"
 import { useRouter } from "next/navigation"
 import { useEffect, useRef, useState } from "react"
 
 import type { WeightUnit } from "@/lib/units"
 
-import { discardEmptyExercise, loadExerciseSeries, type AddEntryOutcome } from "../../actions"
+import {
+  createExercise,
+  discardEmptyExercise,
+  loadExerciseSeries,
+  type AddEntryOutcome,
+} from "../../actions"
+import type { AddPrefill } from "../../lib/prefill"
 import { normaliseShape, type SeriesShape } from "../../lib/series"
 import type { ExerciseListItem, ExerciseSummary, SeriesView } from "../../queries"
 import { ExercisePicker, PickedExercise } from "../exercise-picker"
@@ -30,6 +37,11 @@ interface AddPanelProps {
   basePath: string
   /** Set when a coach is logging for a client. */
   athleteId?: string
+  /**
+   * Steps 01 and 02 answered in advance, from a link such as a dashboard's empty cell.
+   * Applied once on mount; the URL is then rewritten so a refresh doesn't apply it again.
+   */
+  prefill?: AddPrefill
 }
 
 /** The lift step folds open and closed rather than popping in and out. */
@@ -43,15 +55,49 @@ function scrollToStep(element: HTMLElement | null) {
   element?.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" })
 }
 
-export function AddPanel({ exercises, unit: initialUnit, basePath, athleteId }: AddPanelProps) {
+export function AddPanel({
+  exercises,
+  unit: initialUnit,
+  basePath,
+  athleteId,
+  prefill,
+}: AddPanelProps) {
   const router = useRouter()
   const [unit, setUnit] = useState(initialUnit)
   const [exercise, setExercise] = useState<ExerciseSummary | null>(null)
   const [series, setSeries] = useState<SeriesView[]>([])
   const [shape, setShape] = useState<SeriesShape | null>(null)
   const [outcome, setOutcome] = useState<AddEntryOutcome | null>(null)
+  const [prefilling, setPrefilling] = useState(Boolean(prefill))
+  const prefillApplied = useRef(false)
   const entryRef = useRef<HTMLDivElement>(null)
   const entryWasOpen = useRef(false)
+
+  // Resolve the linked movement the way the picker would: an existing movement is reused,
+  // a catalogue name is created, and a near-duplicate falls back to the closest existing
+  // one (which is almost always what a link means). Guarded by a ref so it runs exactly
+  // once, including under React's development double-invoke.
+  useEffect(() => {
+    if (!prefill || prefillApplied.current) return
+    prefillApplied.current = true
+
+    async function apply(target: AddPrefill) {
+      let result = await createExercise({ name: target.movement, athleteId })
+      if (!result.ok && result.status === "confirm" && result.suggestions[0]) {
+        result = await createExercise({ name: result.suggestions[0].name, athleteId })
+      }
+      if (result.ok) {
+        const loaded = await loadExerciseSeries(result.exercise.slug, athleteId)
+        setExercise(result.exercise)
+        setSeries(loaded)
+        setShape(target.series)
+      }
+      setPrefilling(false)
+      // Consumed: neither a refresh nor Back should set the form up all over again.
+      window.history.replaceState(null, "", `${basePath}?panel=add`)
+    }
+    void apply(prefill)
+  }, [prefill, athleteId, basePath])
 
   // The weight field only exists once a PR type is chosen, so it appears below whatever the
   // lifter was just looking at — often below the fold on a phone. Changing PR type while
@@ -120,6 +166,14 @@ export function AddPanel({ exercises, unit: initialUnit, basePath, athleteId }: 
       <Step index="01" title="Movement" done={Boolean(exercise)}>
         {exercise ? (
           <PickedExercise exercise={exercise} onChange={() => reset(false)} />
+        ) : prefilling && prefill ? (
+          <div
+            role="status"
+            className="flex items-center gap-3 rounded-xl bg-card p-3.5 text-sm text-muted-foreground ring-1 ring-foreground/10"
+          >
+            <Loader2Icon className="size-4 animate-spin text-highlight" aria-hidden="true" />
+            Setting up {prefill.movement}…
+          </div>
         ) : (
           <ExercisePicker
             exercises={exercises}

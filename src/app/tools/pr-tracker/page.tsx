@@ -1,6 +1,7 @@
 import { ToolShell } from "@/components/layout/tool-shell"
 import { PrTrackerPanels, type Panel } from "@/features/pr-tracker/components/pr-tracker-panels"
 import { SummaryStrip } from "@/features/pr-tracker/components/summary-strip"
+import { parseAddPrefill } from "@/features/pr-tracker/lib/prefill"
 import { getLiftUnit, getTrackerSummary, listExercises } from "@/features/pr-tracker/queries"
 import { getClientAreaUser } from "@/server/auth"
 
@@ -17,7 +18,10 @@ export default async function PrTrackerPage(props: PageProps<"/tools/pr-tracker"
   const user = await getClientAreaUser()
   if (!user) return null
 
-  const { panel } = await props.searchParams
+  const { panel, movement, series } = await props.searchParams
+  // A link with the movement and PR type chosen (the dashboard's empty cells) always
+  // means "add", whatever the panel param says.
+  const prefill = parseAddPrefill(movement, series) ?? undefined
 
   const [exercises, unit, summary] = await Promise.all([
     listExercises(user.id),
@@ -27,8 +31,13 @@ export default async function PrTrackerPage(props: PageProps<"/tools/pr-tracker"
 
   // Someone with records almost always came back to look at them; someone with none can
   // only usefully add. Defaulting beats opening on a screen that just asks them to choose.
-  const initial: Panel =
-    panel === "add" || panel === "view" ? panel : exercises.length ? "view" : "add"
+  const initial: Panel = prefill
+    ? "add"
+    : panel === "add" || panel === "view"
+      ? panel
+      : exercises.length
+        ? "view"
+        : "add"
 
   return (
     <ToolShell title="PR Tracker" description={description}>
@@ -37,6 +46,7 @@ export default async function PrTrackerPage(props: PageProps<"/tools/pr-tracker"
         unit={unit}
         basePath="/tools/pr-tracker"
         initialPanel={initial}
+        prefill={prefill}
         summary={summary.recordCount > 0 ? <SummaryStrip summary={summary} /> : null}
       />
     </ToolShell>
