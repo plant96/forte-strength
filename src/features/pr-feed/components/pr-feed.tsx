@@ -42,7 +42,7 @@ import {
 } from "../lib/feed"
 
 /** How long each PR stays up before the next one slides in. */
-const SLIDE_MS = 5500
+const SLIDE_MS = 3850
 /** A sideways swipe longer than this, in px, changes slide. */
 const SWIPE_PX = 48
 /** Caps one frame's step, so a stalled frame can't skip a slide outright. */
