@@ -9,6 +9,7 @@ export default function Loading() {
         <Skeleton className="h-14 w-72 sm:h-20 sm:w-96" />
         <Skeleton className="h-4 w-full max-w-md" />
       </div>
+      <Skeleton className="h-[17rem] w-full rounded-2xl sm:h-64" />
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
         <Skeleton className="h-80 w-full rounded-2xl" />
         <div className="flex flex-col gap-6">

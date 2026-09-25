@@ -47,7 +47,8 @@ export function Greeting({ firstName }: { firstName: string | null }) {
         ))}
       </m.h1>
       <m.p variants={enter} className="max-w-xl text-muted-foreground">
-        Here&apos;s where you stand: your best lifts, your tools, and what&apos;s coming next.
+        Here&apos;s where you stand: your best lifts, what the team&apos;s been hitting, your tools,
+        and what&apos;s coming next.
       </m.p>
     </m.header>
   )
