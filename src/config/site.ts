@@ -88,6 +88,7 @@ export const siteConfig = {
   mainNav: [
     { title: "Coaching", href: "/" },
     { title: "Gallery", href: "/gallery" },
+    { title: "Leaderboard", href: "/leaderboard" },
     { title: "Tools", kind: "tools", items: tools },
     { title: "Resources", kind: "resources", items: resources },
   ] satisfies NavEntry[],

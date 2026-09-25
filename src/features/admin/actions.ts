@@ -56,6 +56,7 @@ export async function setUserClient(id: string, client: boolean): Promise<AdminA
     return { ok: false, message: "Couldn't update the user. They may have been deleted." }
   }
   revalidatePath("/admin", "layout")
+  revalidatePath("/leaderboard")
   return { ok: true }
 }
 
@@ -98,6 +99,7 @@ export async function deleteUser(id: string): Promise<AdminActionResult> {
   }
 
   revalidatePath("/admin", "layout")
+  revalidatePath("/leaderboard")
   return { ok: true }
 }
 

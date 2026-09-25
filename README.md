@@ -9,6 +9,9 @@ powerlifting team. It has:
 - **Tools** (`/tools`): the TDEE calculator and the DOTS / GLP calculator, which autofill from a
   signed-in user's profile, and the PR tracker (`/tools/pr-tracker`), where clients log
   personal records and watch the line climb.
+- **Leaderboard** (`/leaderboard`): the team's top 10 DOTS and a generated best-lift board by
+  age group and weight class, built from coaching clients' PR trackers. Public, but names show as
+  first name and last initial only.
 - **Resources** (`/resources/mobility-vault`): the mobility, flexibility and warm-up vault, with a
   page per lift.
 - **Website accounts** (Clerk) with onboarding (`/onboarding`) and a profile (`/profile`). These
@@ -81,7 +84,7 @@ pnpm db:studio    # browse and edit the database
 prisma/                schema.prisma, migrations, seed.ts
 src/
   app/
-    (marketing)/       landing page, /application, /gallery, /resources
+    (marketing)/       landing page, /application, /gallery, /leaderboard, /resources
     tools/             /tools, /tools/tdee-calculator, /tools/dots-calculator, /tools/pr-tracker
     (account)/         /onboarding, /profile
     (auth)/            Clerk sign-in / sign-up
@@ -146,6 +149,25 @@ path there.
   Weight and height are kept in the units the user chose.
 - When a signed-in user with a profile opens the calculator, the form is filled in from it, and
   a notification says so, with a link to settings. Every field can still be changed.
+
+## Leaderboard
+
+- **Who's on it**: coaching clients (`User.clientSince != null`) who have a profile. Bodyweight
+  and sex come from the profile, so a client without one is left off both boards. Only
+  one-rep-max series count, classified into squat, bench and deadlift the same way as the
+  dashboard's best-lifts table (`features/pr-tracker/lib/lifts.ts`).
+- **Best DOTS**: squat + bench + deadlift 1RMs against the current profile bodyweight, with no
+  age coefficient (`features/leaderboard/lib/athletes.ts`). Only athletes with all three lifts
+  qualify; the top 10 show, and a signed-in client outside it sees their own place.
+- **Best lift by class**: age groups are Teen 1 (14–15), Teen 2 (16–17), Teen 3 (18–19),
+  JR (20–23), Open (24–39) and Masters (40+); under-14s are in no group. Weight classes are
+  upper bounds, not split by sex: ≤59, ≤67.5, ≤75, ≤83, ≤93, ≤110 and over 110 kg
+  (`features/leaderboard/lib/groups.ts`). Ties go to the lighter lifter, then the earlier date.
+- **Privacy**: the query selects names only (no email or avatar) and the page shows
+  "First L." (`features/leaderboard/lib/name.ts`).
+- The whole roster is read in one query (`features/leaderboard/queries.ts`) and handed to the
+  client, where ranking and filtering happen, so filter changes animate without a round trip.
+  PR tracker and admin client changes call `revalidatePath("/leaderboard")`.
 
 ## Coaching applications
 

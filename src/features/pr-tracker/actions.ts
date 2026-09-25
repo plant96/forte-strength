@@ -58,6 +58,7 @@ async function resolveActor(athleteId?: string): Promise<Actor | null> {
 
 function revalidateFor(actor: Actor) {
   revalidatePath("/tools/pr-tracker", "layout")
+  revalidatePath("/leaderboard")
   if (actor.loggedById) revalidatePath(`/admin/users/${actor.athleteId}/prs`, "layout")
 }
 

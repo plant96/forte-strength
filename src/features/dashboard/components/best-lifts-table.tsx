@@ -1,10 +1,11 @@
 "use client"
 
 import { ArrowRightIcon, PlusIcon, TrophyIcon } from "lucide-react"
-import { m, useReducedMotion, type Variants } from "motion/react"
+import { m, type Variants } from "motion/react"
 import Link from "next/link"
 
 import { AnimatedNumber } from "@/components/motion/animated-number"
+import { LightSweep } from "@/components/motion/light-sweep"
 import { Button } from "@/components/ui/button"
 import {
   BEST_LIFT_REPS,
@@ -35,24 +36,14 @@ const gridClass =
 
 /** S / B / D by 1RM / 2RM / 3RM, numbers counting up as the rows slide in. */
 export function BestLiftsTable({ lifts, unit }: { lifts: BestLifts; unit: WeightUnit }) {
-  const reduceMotion = useReducedMotion()
-
   return (
     <m.section
       variants={enter}
       aria-labelledby="best-lifts-heading"
       className="relative min-w-0 overflow-hidden rounded-2xl bg-card ring-1 ring-foreground/10"
     >
-      {!reduceMotion && (
-        // A single light sweep across the card once it has landed.
-        <m.div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-y-0 left-0 w-1/3 bg-linear-to-r from-transparent via-primary/10 to-transparent"
-          initial={{ x: "-100%" }}
-          animate={{ x: "400%" }}
-          transition={{ duration: 1.4, delay: 0.6, ease: "easeInOut" }}
-        />
-      )}
+      {/* A single light sweep across the card once it has landed. */}
+      <LightSweep delay={0.6} />
 
       <div className="flex items-end justify-between gap-3 border-b border-border px-5 py-4 sm:px-6">
         <div className="flex flex-col gap-1">

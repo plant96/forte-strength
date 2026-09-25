@@ -30,7 +30,7 @@ export type ProfileRecord = Pick<
 >
 
 const SEX_TO_DB: Record<Sex, DbSex> = { male: "MALE", female: "FEMALE" }
-const SEX_FROM_DB: Record<DbSex, Sex> = { MALE: "male", FEMALE: "female" }
+export const SEX_FROM_DB: Record<DbSex, Sex> = { MALE: "male", FEMALE: "female" }
 /** Shared with the PR tracker, which stores its own gym-weight unit on `User`. */
 export const WEIGHT_UNIT_TO_DB: Record<WeightUnit, DbWeightUnit> = { lb: "LB", kg: "KG" }
 export const WEIGHT_UNIT_FROM_DB: Record<DbWeightUnit, WeightUnit> = { LB: "lb", KG: "kg" }

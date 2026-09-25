@@ -31,6 +31,9 @@
   --color-highlight: var(--highlight);
   --color-bulk: var(--bulk);
   --color-cut: var(--cut);
+  --color-gold: var(--gold);
+  --color-silver: var(--silver);
+  --color-bronze: var(--bronze);
   --color-protein: var(--protein);
   --color-carbs: var(--carbs);
   --color-fat: var(--fat);
@@ -91,6 +94,10 @@
   --highlight: oklch(0.76 0.15 22);
   --bulk: oklch(0.72 0.17 32);
   --cut: oklch(0.76 0.11 232);
+  /* Podium medals */
+  --gold: oklch(0.82 0.16 88);
+  --silver: oklch(0.84 0.02 245);
+  --bronze: oklch(0.68 0.12 52);
 
   /* Macro series (categorical, validated for adjacency on the dark card surface) */
   --protein: #e66767;
