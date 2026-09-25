@@ -64,6 +64,21 @@
 }
 
 /*
+ * A word's colour rising out of transparent, for text that reveals word by word. Colour is
+ * the one property that can animate on inline text without a transform or a compositing
+ * layer, so the line breaks it sits in can never move while it plays.
+ */
+@theme {
+  --animate-word-in: word-in 0.5s ease-out both;
+
+  @keyframes word-in {
+    from {
+      color: transparent;
+    }
+  }
+}
+
+/*
  * The site is dark-only for now, so the palette lives on :root.
  * A light theme can later override these tokens under its own selector.
  * Neutrals come from the logo: charcoal #2b2b2b and off-white #f4f4f4.

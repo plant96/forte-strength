@@ -53,11 +53,15 @@ function renderFeed(prs: FeedPr[] = PRS) {
 
 const slide = (name: string) => screen.findByRole("group", { name })
 
+/** The headline is one paragraph of word spans, so match on its whole text. */
+const headline = (text: string) =>
+  screen.findByText((_, element) => element?.tagName === "P" && element.textContent === text)
+
 describe("PrFeed", () => {
   it("opens on the newest PR, with its type and gain", async () => {
     renderFeed()
     expect(await slide("1 of 3")).toBeInTheDocument()
-    expect(screen.getByText("Jim R. hit 240 lb on bench for 4 reps")).toBeInTheDocument()
+    expect(await headline("Jim R. hit 240 lb on bench for 4 reps")).toBeInTheDocument()
     expect(screen.getByText("4-Rep PR")).toBeInTheDocument()
     expect(screen.getByText("+10 lb")).toBeInTheDocument()
   })
@@ -69,10 +73,10 @@ describe("PrFeed", () => {
 
     await user.click(next)
     expect(await slide("2 of 3")).toBeInTheDocument()
-    expect(await screen.findByText("Jon K. hit 400 lb on squat for a new max")).toBeInTheDocument()
+    expect(await headline("Jon K. hit 400 lb on squat for a new max")).toBeInTheDocument()
 
     await user.click(next)
-    expect(await screen.findByText("You hit 315 lb on deadlift for 5×5")).toBeInTheDocument()
+    expect(await headline("You hit 315 lb on deadlift for 5×5")).toBeInTheDocument()
 
     await user.click(next)
     expect(await slide("1 of 3")).toBeInTheDocument()

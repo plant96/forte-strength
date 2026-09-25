@@ -3,7 +3,14 @@ import { describe, expect, it } from "vitest"
 import type { CompetitionLift } from "@/features/pr-tracker/lib/lifts"
 import { lbToKg } from "@/lib/units"
 
-import { buildFeed, prSentence, sentenceText, type FeedPr, type FeedRow } from "./feed"
+import {
+  buildFeed,
+  headlineWords,
+  prSentence,
+  sentenceText,
+  type FeedPr,
+  type FeedRow,
+} from "./feed"
 
 type RowOverrides = Partial<Omit<FeedRow, "series">> & { series?: Partial<FeedRow["series"]> }
 
@@ -154,5 +161,27 @@ describe("prSentence", () => {
   it("tags the parts the headline colours", () => {
     const tones = prSentence(pr(), "lb", "2026-09-25").map((segment) => segment.tone)
     expect(tones).toEqual(["subject", "plain", "weight", "plain", "lift", "plain"])
+  })
+})
+
+describe("headlineWords", () => {
+  const words = (feedPr: FeedPr) =>
+    headlineWords(prSentence(feedPr, "lb", "2026-09-25")).map((word) => word.text)
+
+  it("keeps names and weights whole and the last two words together", () => {
+    expect(
+      words(pr({ name: "Korbyn B.", shape: { kind: "one-rep-max", sets: 1, reps: 1 } })),
+    ).toEqual(["Korbyn B.", "just", "hit", "240 lb", "on", "bench", "for", "a", "new max"])
+    expect(words(pr())).toEqual(["Jim R.", "just", "hit", "240 lb", "on", "bench", "for", "4 reps"])
+  })
+
+  it("leaves a two-word tail as one piece", () => {
+    const volume = pr({ shape: { kind: "volume", sets: 5, reps: 5 } })
+    expect(words(volume).at(-1)).toBe("for 5\u00d75")
+  })
+
+  it("reads back as the same sentence", () => {
+    const segments = prSentence(pr(), "lb", "2026-09-25")
+    expect(sentenceText(headlineWords(segments))).toBe(sentenceText(segments))
   })
 })

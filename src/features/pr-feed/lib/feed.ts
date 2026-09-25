@@ -101,8 +101,8 @@ export interface SentenceSegment {
 /**
  * "Jim R. just hit 240 lb on bench for 4 reps", in styled pieces.
  *
- * "just" only for a PR from today or yesterday; `now` is null until the viewer's own
- * day is known, so the server and the first client render agree.
+ * "just" only for a PR from today or yesterday, by the viewer's own day; without one
+ * (`now` null), it is left out.
  */
 export function prSentence(pr: FeedPr, unit: WeightUnit, now: Day | null): SentenceSegment[] {
   const fresh = now !== null && daysBetween(pr.achievedOn, now) <= 1
@@ -126,4 +126,22 @@ export function prSentence(pr: FeedPr, unit: WeightUnit, now: Day | null): Sente
 
 export function sentenceText(segments: readonly SentenceSegment[]) {
   return segments.map((segment) => segment.text).join(" ")
+}
+
+/**
+ * The headline's unbreakable pieces, in order. A name ("Korbyn B.") and a weight
+ * ("580 lb") never split across lines, and the sentence's last two words stay together,
+ * so no line is ever left holding a lone "max" or "reps".
+ */
+export function headlineWords(segments: readonly SentenceSegment[]): SentenceSegment[] {
+  return segments.flatMap((segment, index) => {
+    if (segment.tone !== "plain") return [segment]
+    const words = segment.text.split(" ")
+    const last = index === segments.length - 1
+    const cut = last && words.length > 1 ? words.length - 2 : words.length
+    return [
+      ...words.slice(0, cut),
+      ...(cut < words.length ? [words.slice(cut).join(" ")] : []),
+    ].map((text) => ({ text, tone: segment.tone }))
+  })
 }

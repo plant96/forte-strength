@@ -26,6 +26,11 @@ function getFormatter(decimals: number) {
   return formatter
 }
 
+/** The value exactly as `AnimatedNumber` shows it once settled, e.g. to reserve its width. */
+export function formatAnimatedNumber(value: number, decimals = 0) {
+  return getFormatter(decimals).format(value)
+}
+
 /**
  * A number that springs to each new value. The animated text is hidden from
  * screen readers, which get the final value instead.

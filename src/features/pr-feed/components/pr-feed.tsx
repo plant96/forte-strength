@@ -21,12 +21,12 @@ import {
   type Variants,
 } from "motion/react"
 import Link from "next/link"
-import { useRef, useState, useSyncExternalStore } from "react"
+import { Fragment, useRef, useState, useSyncExternalStore } from "react"
 
-import { AnimatedNumber } from "@/components/motion/animated-number"
+import { AnimatedNumber, formatAnimatedNumber } from "@/components/motion/animated-number"
 import { LightSweep } from "@/components/motion/light-sweep"
 import { Button } from "@/components/ui/button"
-import { enter, stagger } from "@/features/dashboard/components/variants"
+import { enter } from "@/features/dashboard/components/variants"
 import { COMPETITION_LIFT_LABELS } from "@/features/pr-tracker/lib/lifts"
 import { seriesLabel } from "@/features/pr-tracker/lib/series"
 import { formatDelta, fromKg } from "@/features/pr-tracker/lib/weight"
@@ -34,8 +34,8 @@ import { describeDay, today, type Day } from "@/lib/day"
 import type { WeightUnit } from "@/lib/units"
 
 import {
+  headlineWords,
   prSentence,
-  sentenceText,
   type FeedPr,
   type SentenceSegment,
   type SentenceTone,
@@ -47,6 +47,9 @@ const SLIDE_MS = 5500
 const SWIPE_PX = 48
 /** Caps one frame's step, so a stalled frame can't skip a slide outright. */
 const MAX_FRAME_MS = 100
+/** The headline's first word colours in as the paragraph starts to rise; then one per gap. */
+const WORD_DELAY_MS = 340
+const WORD_STAGGER_MS = 55
 
 const ADD_HREF = "/tools/pr-tracker?panel=add"
 
@@ -92,10 +95,15 @@ const rise: Variants = {
   show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 220, damping: 24 } },
 }
 
-/** The greeting's move: each word rises out of its own clipped line. */
-const word: Variants = {
-  hidden: { y: "110%", opacity: 0 },
-  show: { y: 0, opacity: 1, transition: { type: "spring", stiffness: 240, damping: 24 } },
+/** The headline rises out of a blur as one block; its words colour in on their own. */
+const headline: Variants = {
+  hidden: { opacity: 0, y: 12, filter: "blur(6px)" },
+  show: {
+    opacity: 1,
+    y: 0,
+    filter: "blur(0px)",
+    transition: { type: "spring", stiffness: 200, damping: 24 },
+  },
 }
 
 /** A soft bloom of colour behind the lift tile as it lands. */
@@ -132,7 +140,8 @@ const subscribeToNothing = () => () => {}
 /**
  * The viewer's own calendar day, or null during the server render and hydration. "Today"
  * on a UTC server is often tomorrow for an American evening, and rendering it would make
- * the first client render disagree with the HTML.
+ * the first client render disagree with the HTML. Slides wait for it rather than render
+ * without it: adding "just" to a sentence already on screen would re-wrap it.
  */
 function useViewerToday(): Day | null {
   return useSyncExternalStore(subscribeToNothing, today, () => null)
@@ -266,8 +275,10 @@ function FeedCarousel({ prs, unit }: { prs: FeedPr[]; unit: WeightUnit }) {
 
       <div
         // Slides share one grid cell, so the outgoing and incoming overlap without the
-        // card changing height; the minimum fits a three-line sentence on a phone.
-        className="relative grid min-h-44 touch-pan-y sm:min-h-40"
+        // card changing height; the minimum fits a three-line sentence on a phone. The
+        // column is a fixed fraction, never sized from content, so a slide's width can't
+        // depend on anything mid-animation inside either of them.
+        className="relative grid min-h-44 touch-pan-y grid-cols-1 sm:min-h-40"
         aria-live={running ? "off" : "polite"}
         onPointerDown={(event) => {
           // Touch and pen only: a mouse drag across the text is a selection, not a swipe.
@@ -289,14 +300,16 @@ function FeedCarousel({ prs, unit }: { prs: FeedPr[]; unit: WeightUnit }) {
         }}
       >
         <AnimatePresence custom={direction}>
-          <Slide
-            key={pr.id}
-            pr={pr}
-            unit={unit}
-            now={now}
-            label={`${position + 1} of ${count}`}
-            direction={direction}
-          />
+          {now !== null && (
+            <Slide
+              key={pr.id}
+              pr={pr}
+              unit={unit}
+              now={now}
+              label={`${position + 1} of ${count}`}
+              direction={direction}
+            />
+          )}
         </AnimatePresence>
       </div>
     </m.section>
@@ -413,14 +426,14 @@ function Slide({
 }: {
   pr: FeedPr
   unit: WeightUnit
-  now: Day | null
+  now: Day
   label: string
   direction: Direction
 }) {
   const segments = prSentence(pr, unit, now)
-  const when = now ? describeDay(pr.achievedOn, now) : null
   const lift = COMPETITION_LIFT_LABELS[pr.lift]
   const value = fromKg(pr.weightKg, unit)
+  const decimals = Number.isInteger(value) ? 0 : 1
 
   return (
     <m.div
@@ -480,7 +493,7 @@ function Slide({
               {formatDelta(pr.gainKg, unit)}
             </span>
           )}
-          {when && <span className="text-muted-foreground">{when}</span>}
+          <span className="text-muted-foreground">{describeDay(pr.achievedOn, now)}</span>
         </m.div>
         <Headline segments={segments} mine={pr.mine} />
       </div>
@@ -491,15 +504,25 @@ function Slide({
         aria-hidden="true"
         className="relative hidden shrink-0 flex-col items-end sm:flex"
       >
-        <AnimatedNumber
-          value={value}
-          from={0}
-          decimals={Number.isInteger(value) ? 0 : 1}
+        {/* The final value, invisible, sets the column's width before the count starts.
+            Counting up from 0 would otherwise widen it digit by digit and re-wrap the
+            sentence beside it mid-count. */}
+        <span
           className={cn(
-            "font-heading text-5xl leading-none font-extrabold lg:text-6xl",
+            "grid justify-items-end font-heading text-5xl leading-none font-extrabold tabular-nums lg:text-6xl",
             pr.mine && "text-gold",
           )}
-        />
+        >
+          <span className="invisible col-start-1 row-start-1">
+            {formatAnimatedNumber(value, decimals)}
+          </span>
+          <AnimatedNumber
+            value={value}
+            from={0}
+            decimals={decimals}
+            className="col-start-1 row-start-1"
+          />
+        </span>
         <span className="mt-1.5 font-heading text-xs font-semibold tracking-[0.3em] text-muted-foreground uppercase">
           {unit}
         </span>
@@ -508,38 +531,36 @@ function Slide({
   )
 }
 
-/** A name or a weight never breaks across lines; everything else goes word by word. */
-function pieces(segment: SentenceSegment) {
-  return segment.tone === "subject" || segment.tone === "weight"
-    ? [segment.text]
-    : segment.text.split(" ")
-}
-
+/**
+ * The sentence, as ordinary inline text.
+ *
+ * Only the paragraph as a whole moves; the words inside it just colour in, one after
+ * another. Nothing inside its line boxes is transformed, made inline-block or balanced, so
+ * the browser lays the sentence out once and no engine can re-wrap it mid-animation. (When
+ * each word was a rising inline-block in a `text-wrap: balance` paragraph, iOS Safari 18
+ * stacked the words one per line until the animation finished.)
+ */
 function Headline({ segments, mine }: { segments: SentenceSegment[]; mine: boolean }) {
   return (
-    <p className="font-heading text-2xl leading-[1.05] font-bold text-balance uppercase sm:text-3xl">
-      <span className="sr-only">{sentenceText(segments)}</span>
-      <m.span aria-hidden="true" variants={stagger(0.045)} className="block">
-        {segments.flatMap((segment, s) =>
-          pieces(segment).map((piece, p) => (
-            <span
-              key={`${s}-${p}`}
-              className="mr-[0.24em] inline-block overflow-hidden pb-[0.08em] align-bottom last:mr-0"
-            >
-              <m.span
-                variants={word}
-                className={cn(
-                  "inline-block whitespace-nowrap",
-                  segment.tone === "subject" && mine ? "text-gold" : TONES[segment.tone],
-                )}
-              >
-                {piece}
-              </m.span>
-            </span>
-          )),
-        )}
-      </m.span>
-    </p>
+    <m.p
+      variants={headline}
+      className="font-heading text-2xl leading-[1.1] font-bold uppercase sm:text-3xl"
+    >
+      {headlineWords(segments).map((word, index) => (
+        <Fragment key={index}>
+          {index > 0 && " "}
+          <span
+            className={cn(
+              "animate-word-in whitespace-nowrap motion-reduce:animate-none",
+              word.tone === "subject" && mine ? "text-gold" : TONES[word.tone],
+            )}
+            style={{ animationDelay: `${WORD_DELAY_MS + index * WORD_STAGGER_MS}ms` }}
+          >
+            {word.text}
+          </span>
+        </Fragment>
+      ))}
+    </m.p>
   )
 }
 
