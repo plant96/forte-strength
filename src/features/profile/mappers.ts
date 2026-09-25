@@ -6,6 +6,7 @@ import type {
   WeightUnit as DbWeightUnit,
 } from "@/generated/prisma/client"
 import { cmToFtIn, lbToKg, roundTo, type HeightUnit, type WeightUnit } from "@/lib/units"
+import type { DotsFormInput } from "@/features/dots/schema"
 import { heightToCm } from "@/features/tdee/body-fields"
 import type { Sex, TrainingIntensityId } from "@/features/tdee/lib/constants"
 import type { TdeeFormInput } from "@/features/tdee/schema"
@@ -125,5 +126,24 @@ export function profileRecordToTdeeFormInput(
   return {
     ...bodyFieldsFromRecord(profile),
     age: String(ageOn(dateToBirthday(profile.birthDate), today)),
+  }
+}
+
+/**
+ * Database fields → DOTS calculator form state. The total isn't stored on the profile, so it
+ * stays blank; its unit follows the user's gym-weight preference.
+ */
+export function profileRecordToDotsFormInput(
+  profile: ProfileRecord,
+  liftUnit: WeightUnit = "lb",
+  today: Date = new Date(),
+): DotsFormInput {
+  return {
+    weight: numberText(profile.weight),
+    weightUnit: WEIGHT_UNIT_FROM_DB[profile.weightUnit],
+    total: "",
+    totalUnit: liftUnit,
+    age: String(ageOn(dateToBirthday(profile.birthDate), today)),
+    sex: SEX_FROM_DB[profile.sex],
   }
 }

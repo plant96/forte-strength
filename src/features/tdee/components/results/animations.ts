@@ -1,12 +1,14 @@
-import { stagger, type Transition, type Variants } from "motion/react"
+import { stagger, type Variants } from "motion/react"
 
-const spring: Transition = { type: "spring", stiffness: 260, damping: 26 }
+import {
+  fadeUpVariants,
+  popInVariants,
+  scaleInVariants,
+  spring,
+} from "@/components/motion/variants"
 
 /** TDEE card: scales in first. */
-export const summaryVariants: Variants = {
-  hidden: { opacity: 0, scale: 0.9 },
-  visible: { opacity: 1, scale: 1, transition: spring },
-}
+export const summaryVariants = scaleInVariants
 
 /**
  * Bulk/Cut panels start tucked behind the TDEE card and slide out
@@ -25,12 +27,6 @@ export function goalPanelVariants(direction: "up" | "down"): Variants {
   }
 }
 
-export const goalTileVariants: Variants = {
-  hidden: { opacity: 0, y: 10, scale: 0.9 },
-  visible: { opacity: 1, y: 0, scale: 1, transition: spring },
-}
+export const goalTileVariants = popInVariants
 
-export const fadeInLateVariants: Variants = {
-  hidden: { opacity: 0, y: 8 },
-  visible: { opacity: 1, y: 0, transition: { ...spring, delay: 0.85 } },
-}
+export const fadeInLateVariants = fadeUpVariants(0.85)

@@ -36,8 +36,8 @@ export function CoachingCtaView({ profile }: { profile: CoachProfileData }) {
             Turn your numbers into a plan
           </h2>
           <p className="text-base text-pretty text-foreground/85">
-            Your TDEE is the starting point. Work one-on-one with {profile.title} {profile.name} to
-            build your training and nutrition around your goals.
+            Your numbers are the starting point. Work one-on-one with {profile.title} {profile.name}{" "}
+            to build your training and nutrition around your goals.
           </p>
           <p className="text-sm text-pretty text-muted-foreground">
             {profile.credentials} · {profile.yearsExperience}+ years of coaching and competition

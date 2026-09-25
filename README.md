@@ -6,9 +6,9 @@ powerlifting team. It has:
 - **Landing page** (`/`) about Coach Ty and his coaching, leading to the application.
 - **Coaching application** (`/application`). Saved to the database, emailed to the coach, and
   copied to the applicant.
-- **Tools** (`/tools`): the TDEE calculator, which autofills from a signed-in user's profile,
-  and the PR tracker (`/tools/pr-tracker`), where clients log personal records and watch the
-  line climb.
+- **Tools** (`/tools`): the TDEE calculator and the DOTS / GLP calculator, which autofill from a
+  signed-in user's profile, and the PR tracker (`/tools/pr-tracker`), where clients log
+  personal records and watch the line climb.
 - **Resources** (`/resources/mobility-vault`): the mobility, flexibility and warm-up vault, with a
   page per lift.
 - **Website accounts** (Clerk) with onboarding (`/onboarding`) and a profile (`/profile`). These
@@ -82,7 +82,7 @@ prisma/                schema.prisma, migrations, seed.ts
 src/
   app/
     (marketing)/       landing page, /application, /gallery, /resources
-    tools/             /tools, /tools/tdee-calculator, /tools/pr-tracker
+    tools/             /tools, /tools/tdee-calculator, /tools/dots-calculator, /tools/pr-tracker
     (account)/         /onboarding, /profile
     (auth)/            Clerk sign-in / sign-up
     admin/             admin panel (own layout)
@@ -99,7 +99,15 @@ src/
 
 Put it in its own `features/<name>/` folder with a route under `src/app/tools/`, then add it
 to `tools` in `src/config/site.ts`. It shows up in the nav's Tools menu and the sitemap.
-Wrap the page in `ToolShell` (`components/layout/tool-shell.tsx`) for the shared header.
+Wrap the page in `ToolShell` (`components/layout/tool-shell.tsx`) for the shared header. A
+new icon needs a `NavIcon` name in `site.ts` and a Lucide entry in `NAV_ICONS`
+(`components/layout/nav-icons.tsx`).
+
+Pages read the visitor with `getViewer()` (`features/profile/queries.ts`): it gives the profile
+for autofill, the `accountState` behind the sign-up / finish-your-profile prompt beside the
+form heading (`components/account/account-nudge.tsx`), and `client`, which hides the coaching
+CTA from people who are already coached. A calculator's "View the calculations" panel is built
+from the shared pieces in `components/breakdown/` and `lib/breakdown/`.
 
 ### Client-only areas
 
@@ -227,3 +235,18 @@ keeping counts and locations. Erasing IPs does not prevent new visits from recor
   can't drift from the real math.
 - The body and activity fields are shared with onboarding and the profile
   (`features/tdee/components/body-fields.tsx`), so all three forms match.
+
+## DOTS / GLP calculator
+
+- **DOTS** is `Total × 500 / P(BW)`, with `P` a quartic in bodyweight per sex
+  (`features/dots/lib/dots.ts`). USA Powerlifting defines it for 40–210 kg (men) and 40–150 kg
+  (women); bodyweights outside are clamped for DOTS only, and the results say so.
+- **Age-adjusted DOTS** multiplies by the USA Powerlifting age coefficient
+  (`features/dots/lib/age-coefficient.ts`): youth 14–22, masters 40+, 1.00 in between. Masters
+  ages are listed every five years and interpolated linearly between.
+- **GLP** is the IPF GL formula (May 2020), classic/raw only, with no age adjustment
+  (`features/dots/lib/glp.ts`).
+- **Required total** inverts either score, and divides by the age coefficient for DOTS
+  (`features/dots/lib/reverse.ts`).
+- Autofill takes bodyweight, age and sex from the profile; coaching clients with a squat, bench
+  and deadlift 1RM in the PR tracker also get their total (`features/dots/queries.ts`).

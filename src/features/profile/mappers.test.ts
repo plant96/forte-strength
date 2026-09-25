@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest"
 
+import { dotsFormSchema } from "@/features/dots/schema"
 import { tdeeFormSchema } from "@/features/tdee/schema"
 
 import {
+  profileRecordToDotsFormInput,
   profileRecordToFormInput,
   profileRecordToTdeeFormInput,
   profileRecordToTdeeInput,
@@ -88,6 +90,22 @@ describe("profile mappers", () => {
     expect(formInput).toMatchObject({ age: "31", weight: "180.5", heightFt: "5", heightIn: "10" })
     // The autofilled form is valid as-is.
     expect(tdeeFormSchema.safeParse(formInput).success).toBe(true)
+  })
+
+  it("fills the DOTS calculator, leaving the total blank in the user's lift unit", () => {
+    const formInput = profileRecordToDotsFormInput(toRecord(IMPERIAL), "kg", TODAY)
+    expect(formInput).toEqual({
+      weight: "180.5",
+      weightUnit: "lb",
+      total: "",
+      totalUnit: "kg",
+      age: "31",
+      sex: "male",
+    })
+    // Only the total is missing.
+    const parsed = dotsFormSchema.safeParse(formInput)
+    expect(parsed.success).toBe(false)
+    expect(parsed.error?.issues.map((issue) => issue.path[0])).toEqual(["total"])
   })
 
   it("converts to metric calculator input", () => {

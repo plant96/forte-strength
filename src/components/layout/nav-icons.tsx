@@ -3,6 +3,7 @@ import {
   CalculatorIcon,
   DumbbellIcon,
   type LucideIcon,
+  MedalIcon,
   PersonStandingIcon,
   TrophyIcon,
   VaultIcon,
@@ -12,6 +13,7 @@ import type { NavIcon } from "@/config/site"
 
 export const NAV_ICONS: Record<NavIcon, LucideIcon> = {
   calculator: CalculatorIcon,
+  medal: MedalIcon,
   trophy: TrophyIcon,
   vault: VaultIcon,
   squat: PersonStandingIcon,

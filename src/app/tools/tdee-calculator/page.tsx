@@ -2,7 +2,8 @@ import type { Metadata } from "next"
 
 import { CoachingCta } from "@/components/marketing/coaching-cta"
 import { ToolShell } from "@/components/layout/tool-shell"
-import { getCalculatorAutofill } from "@/features/profile/queries"
+import { profileRecordToTdeeFormInput } from "@/features/profile/mappers"
+import { getViewer } from "@/features/profile/queries"
 import { TdeeCalculator } from "@/features/tdee/components/tdee-calculator"
 
 const description =
@@ -20,11 +21,16 @@ export const metadata: Metadata = {
 }
 
 export default async function TdeeCalculatorPage() {
-  const initialValues = await getCalculatorAutofill()
+  const viewer = await getViewer()
+  const initialValues = viewer.profile ? profileRecordToTdeeFormInput(viewer.profile) : undefined
 
   return (
-    <ToolShell title="TDEE Calculator" description={description} footer={<CoachingCta />}>
-      <TdeeCalculator initialValues={initialValues} />
+    <ToolShell
+      title="TDEE Calculator"
+      description={description}
+      footer={viewer.client ? undefined : <CoachingCta />}
+    >
+      <TdeeCalculator initialValues={initialValues} accountState={viewer.accountState} />
     </ToolShell>
   )
 }

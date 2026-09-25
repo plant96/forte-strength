@@ -1,5 +1,5 @@
 /** Icons available to nav entries and the vault's lift switcher (mapped to components in the nav UI). */
-export type NavIcon = "calculator" | "trophy" | "vault" | "squat" | "bench" | "deadlift"
+export type NavIcon = "calculator" | "medal" | "trophy" | "vault" | "squat" | "bench" | "deadlift"
 
 export interface NavLink {
   title: string
@@ -37,6 +37,12 @@ export const tools: NavLink[] = [
     href: "/tools/tdee-calculator",
     description: "Maintenance calories, bulk and cut targets, and macros.",
     icon: "calculator",
+  },
+  {
+    title: "DOTS / GLP Calculator",
+    href: "/tools/dots-calculator",
+    description: "DOTS, age-adjusted DOTS and GLP from your total, plus the total a score needs.",
+    icon: "medal",
   },
   {
     title: "PR Tracker",

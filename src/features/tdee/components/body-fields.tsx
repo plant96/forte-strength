@@ -44,23 +44,38 @@ import {
 import { BodyFatReferenceDialog } from "./body-fat-reference-dialog"
 import { IntensityReferenceDialog } from "./intensity-reference-dialog"
 
-// Any form whose values include the shared body fields (calculator, onboarding, profile).
+// Any form whose values include the keys a field touches (calculators, onboarding, profile).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-type BodyForm<T extends BodyFieldsInput> = UseFormReturn<T, any, any>
+type FormOf<T extends object> = UseFormReturn<T, any, any>
 
-interface BodyFieldProps<T extends BodyFieldsInput> {
-  form: BodyForm<T>
+interface FieldProps<T extends object> {
+  form: FormOf<T>
+}
+
+/** The keys each standalone field needs, so forms without the full body shape can reuse it. */
+export type WeightFieldsInput = Pick<BodyFieldsInput, "weight" | "weightUnit">
+export type SexFieldInput = Pick<BodyFieldsInput, "sex">
+export interface AgeFieldInput {
+  age: string
+}
+
+/** A field only touches its own keys (`Fields`), so any form that has them works. */
+function useFieldsForm<Fields extends object, T extends Fields>(form: FormOf<T>) {
+  const fieldsForm = form as unknown as UseFormReturn<Fields>
+  const { isSubmitted } = useFormState({ control: fieldsForm.control })
+  return { ...fieldsForm, isSubmitted }
 }
 
 /** The field components only touch the shared keys, so they work on the shared shape. */
-function useBodyForm<T extends BodyFieldsInput>(form: BodyForm<T>) {
-  const bodyForm = form as unknown as UseFormReturn<BodyFieldsInput>
-  const { isSubmitted } = useFormState({ control: bodyForm.control })
-  return { ...bodyForm, isSubmitted }
+function useBodyForm<T extends BodyFieldsInput>(form: FormOf<T>) {
+  return useFieldsForm<BodyFieldsInput, T>(form)
 }
 
-export function WeightField<T extends BodyFieldsInput>({ form }: BodyFieldProps<T>) {
-  const { control, getValues, setValue, trigger, getFieldState, isSubmitted } = useBodyForm(form)
+export function WeightField<T extends WeightFieldsInput>({ form }: FieldProps<T>) {
+  const { control, getValues, setValue, trigger, getFieldState, isSubmitted } = useFieldsForm<
+    WeightFieldsInput,
+    T
+  >(form)
   const weightUnit = useWatch({ control, name: "weightUnit" })
 
   function changeUnit(next: WeightUnit) {
@@ -106,7 +121,7 @@ export function WeightField<T extends BodyFieldsInput>({ form }: BodyFieldProps<
   )
 }
 
-export function HeightField<T extends BodyFieldsInput>({ form }: BodyFieldProps<T>) {
+export function HeightField<T extends BodyFieldsInput>({ form }: FieldProps<T>) {
   const { control, getValues, setValue, trigger, clearErrors, isSubmitted } = useBodyForm(form)
   const heightUnit = useWatch({ control, name: "heightUnit" })
   const { errors } = useFormState({ control, name: ["heightFt", "heightIn", "heightCm"] })
@@ -201,8 +216,37 @@ export function HeightField<T extends BodyFieldsInput>({ form }: BodyFieldProps<
   )
 }
 
-export function SexField<T extends BodyFieldsInput>({ form }: BodyFieldProps<T>) {
-  const { control } = useBodyForm(form)
+interface AgeFieldProps<T extends AgeFieldInput> extends FieldProps<T> {
+  placeholder?: string
+}
+
+export function AgeField<T extends AgeFieldInput>({ form, placeholder = "30" }: AgeFieldProps<T>) {
+  const { control } = useFieldsForm<AgeFieldInput, T>(form)
+
+  return (
+    <Controller
+      name="age"
+      control={control}
+      render={({ field, fieldState }) => (
+        <Field data-invalid={fieldState.invalid}>
+          <FieldLabel htmlFor="age">Age</FieldLabel>
+          <UnitInput
+            {...field}
+            id="age"
+            inputMode="numeric"
+            placeholder={placeholder}
+            suffix="years"
+            aria-invalid={fieldState.invalid}
+          />
+          <FieldError errors={[fieldState.error]} />
+        </Field>
+      )}
+    />
+  )
+}
+
+export function SexField<T extends SexFieldInput>({ form }: FieldProps<T>) {
+  const { control } = useFieldsForm<SexFieldInput, T>(form)
 
   return (
     <Controller
@@ -243,7 +287,7 @@ export function SexField<T extends BodyFieldsInput>({ form }: BodyFieldProps<T>)
   )
 }
 
-export function BodyFatField<T extends BodyFieldsInput>({ form }: BodyFieldProps<T>) {
+export function BodyFatField<T extends BodyFieldsInput>({ form }: FieldProps<T>) {
   const { control } = useBodyForm(form)
 
   return (
@@ -273,7 +317,7 @@ export function BodyFatField<T extends BodyFieldsInput>({ form }: BodyFieldProps
   )
 }
 
-export function StepsField<T extends BodyFieldsInput>({ form }: BodyFieldProps<T>) {
+export function StepsField<T extends BodyFieldsInput>({ form }: FieldProps<T>) {
   const { control } = useBodyForm(form)
 
   return (
@@ -298,7 +342,7 @@ export function StepsField<T extends BodyFieldsInput>({ form }: BodyFieldProps<T
   )
 }
 
-export function SessionsField<T extends BodyFieldsInput>({ form }: BodyFieldProps<T>) {
+export function SessionsField<T extends BodyFieldsInput>({ form }: FieldProps<T>) {
   const { control, getValues, setValue, isSubmitted } = useBodyForm(form)
 
   function step(delta: number) {
@@ -355,7 +399,7 @@ export function SessionsField<T extends BodyFieldsInput>({ form }: BodyFieldProp
   )
 }
 
-export function IntensityField<T extends BodyFieldsInput>({ form }: BodyFieldProps<T>) {
+export function IntensityField<T extends BodyFieldsInput>({ form }: FieldProps<T>) {
   const { control } = useBodyForm(form)
   const [sessionsRaw, intensity] = useWatch({ control, name: ["sessions", "intensity"] })
   const noTraining = parseNumberInput(sessionsRaw) === 0

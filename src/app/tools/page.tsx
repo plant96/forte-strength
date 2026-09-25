@@ -7,7 +7,7 @@ import { ToolShell } from "@/components/layout/tool-shell"
 import { CoachingCta } from "@/components/marketing/coaching-cta"
 import { NAV_ICONS } from "@/components/layout/nav-icons"
 import { LOCKED_NAV_HINT, tools } from "@/config/site"
-import { canAccessClientArea, getCurrentUser } from "@/server/auth"
+import { getViewer } from "@/features/profile/queries"
 
 const description =
   "Free, transparent tools for lifters — built on the same maths and methods used with Tyler's roster."
@@ -20,10 +20,14 @@ export const metadata: Metadata = {
 }
 
 export default async function ToolsPage() {
-  const unlocked = canAccessClientArea(await getCurrentUser())
+  const { unlocked, client } = await getViewer()
 
   return (
-    <ToolShell title="Tools" description={description} footer={<CoachingCta />}>
+    <ToolShell
+      title="Tools"
+      description={description}
+      footer={client ? undefined : <CoachingCta />}
+    >
       <ul className="grid gap-4 sm:grid-cols-2">
         {tools.map((tool) => {
           const Icon = tool.icon ? NAV_ICONS[tool.icon] : null

@@ -1,11 +1,14 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
+import { FlameIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useEffect, useRef, useState } from "react"
 import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 
+import type { AccountState } from "@/components/account/account-nudge"
+import { ResultsEmptyState } from "@/components/tools/results-empty-state"
 import type { WeightUnit } from "@/lib/units"
 
 import { calculateGoalTargets } from "../lib/goals"
@@ -19,16 +22,17 @@ import {
   type TdeeFormValues,
 } from "../schema"
 import { MacroSection } from "./results/macro-section"
-import { ResultsEmptyState } from "./results/results-empty-state"
 import { ResultsPanel } from "./results/results-panel"
 import { TdeeForm } from "./tdee-form"
 
 interface TdeeCalculatorProps {
   /** Values from the signed-in user's profile. Every field stays editable. */
   initialValues?: TdeeFormInput
+  /** Drives the sign-up / finish-your-profile prompt beside the form heading. */
+  accountState?: AccountState
 }
 
-export function TdeeCalculator({ initialValues }: TdeeCalculatorProps) {
+export function TdeeCalculator({ initialValues, accountState = "complete" }: TdeeCalculatorProps) {
   const router = useRouter()
   const form = useForm<TdeeFormInput, unknown, TdeeFormValues>({
     resolver: zodResolver(tdeeFormSchema),
@@ -93,7 +97,12 @@ export function TdeeCalculator({ initialValues }: TdeeCalculatorProps) {
   return (
     <div className="flex flex-col gap-12 lg:gap-14">
       <div className="grid items-start gap-6 lg:grid-cols-2 lg:gap-8">
-        <TdeeForm form={form} onCalculate={handleCalculate} hasCalculated={hasCalculated} />
+        <TdeeForm
+          form={form}
+          onCalculate={handleCalculate}
+          hasCalculated={hasCalculated}
+          accountState={accountState}
+        />
         <div ref={resultsRef} className="scroll-mt-20">
           {values && result && goals && calorieTarget ? (
             <ResultsPanel
@@ -105,7 +114,10 @@ export function TdeeCalculator({ initialValues }: TdeeCalculatorProps) {
               onGoalUnitChange={setGoalUnit}
             />
           ) : (
-            <ResultsEmptyState />
+            <ResultsEmptyState icon={FlameIcon}>
+              Fill in your stats and press <span className="text-foreground">Calculate TDEE</span>{" "}
+              to see your maintenance calories, plus daily targets to bulk or cut.
+            </ResultsEmptyState>
           )}
         </div>
       </div>

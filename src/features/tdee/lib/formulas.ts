@@ -1,4 +1,19 @@
 import { siteConfig } from "@/config/site"
+import {
+  formatEntered,
+  formatNumber,
+  MINUS,
+  texEntered,
+  texNumber,
+  texValue,
+} from "@/lib/breakdown/format"
+import type {
+  BreakdownInputRow as GenericInputRow,
+  BreakdownSection as GenericSection,
+  FormulaStep as GenericStep,
+  GaugeData,
+  StepResult as GenericStepResult,
+} from "@/lib/breakdown/types"
 import { KCAL_PER_LB, LB_PER_KG, type WeightUnit } from "@/lib/units"
 
 import type { TdeeFormValues } from "../schema"
@@ -18,55 +33,23 @@ import {
 import { TEF_NOTE, TEF_SOURCE } from "./tef"
 import type { TdeeResult } from "./tdee"
 
-/** A formula written twice: TeX for display, plain text for copying. */
-export interface Expression {
-  tex: string
-  text: string
-}
+export type { Expression } from "@/lib/breakdown/types"
+export { formatNumber } from "@/lib/breakdown/format"
 
-export interface StepResult {
-  symbol: SymbolId | null
-  value: number
-  decimals: number
-  unit?: string
-}
+/** Extra widgets a TDEE step can ask its card to render. */
+export type TdeeStepExtra = "intensity-table" | "targets-table" | "macros-table"
 
-export interface Gauge {
-  value: number
-  min: number
-  max: number
-  decimals: number
-}
-
-export interface FormulaStep {
-  id: string
-  title: string
-  description: string
-  formula: Expression
-  substituted: Expression
-  result?: StepResult
-  /** Symbols explained in this step's "where" line. */
-  symbols: SymbolId[]
-  notes: string[]
-  gauge?: Gauge
-  extra?: "intensity-table" | "targets-table" | "macros-table"
-}
+export type StepResult = GenericStepResult<SymbolId>
+export type Gauge = GaugeData
+export type FormulaStep = GenericStep<SymbolId, TdeeStepExtra>
 
 export type BreakdownSectionId = "bmr" | "activity" | "tdee" | "targets" | "macros"
 
-export interface BreakdownSection {
+export interface BreakdownSection extends GenericSection<SymbolId, TdeeStepExtra> {
   id: BreakdownSectionId
-  title: string
-  description: string
-  steps: FormulaStep[]
 }
 
-export interface BreakdownInputRow {
-  label: string
-  entered: string
-  used: string
-  symbol: SymbolId | null
-}
+export type BreakdownInputRow = GenericInputRow<SymbolId>
 
 export interface Breakdown {
   inputs: BreakdownInputRow[]
@@ -117,33 +100,6 @@ export const SOURCES = [
     citation: TEF_SOURCE,
   },
 ] as const
-
-// ---------------------------------------------------------------------------
-// Number formatting
-// ---------------------------------------------------------------------------
-
-const MINUS = "−"
-
-/** Fixed decimals with thousands separators, e.g. 1839 → "1,839.0". */
-export function formatNumber(value: number, decimals: number) {
-  return value.toLocaleString("en-US", {
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
-  })
-}
-
-/** Up to two decimals without trailing zeros, for echoing what the user typed. */
-function formatEntered(value: number) {
-  return value.toLocaleString("en-US", { maximumFractionDigits: 2 })
-}
-
-const texNumber = (value: number, decimals: number) =>
-  formatNumber(value, decimals).replace(/,/g, "{,}")
-
-/** Wraps one of the user's numbers so it's highlighted (see the `\val` macro in <Tex>). */
-const texValue = (value: number, decimals: number) => `\\val{${texNumber(value, decimals)}}`
-
-const texEntered = (value: number) => `\\val{${formatEntered(value).replace(/,/g, "{,}")}}`
 
 const DECIMALS = { kg: 2, cm: 1, kcal: 1, ratio: 4 } as const
 

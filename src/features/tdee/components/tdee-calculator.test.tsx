@@ -179,6 +179,19 @@ describe("TdeeCalculator", () => {
     expect(within(guide).getByRole("button", { name: /moderate/i })).toBeDisabled()
   })
 
+  it("prompts signed-out visitors to create an account beside the form heading", () => {
+    render(
+      <MotionProvider>
+        <TdeeCalculator accountState="signed-out" />
+      </MotionProvider>,
+    )
+    expect(screen.getByText("Create an account to save your metrics")).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: /sign up/i })).toHaveAttribute("href", "/sign-up")
+    // The fieldset is still named by its heading alone, not by the prompt.
+    const group = screen.getByRole("group", { name: /^01\s*Your body$/ })
+    expect(group).toBeInTheDocument()
+  })
+
   it("shows three macro splits and rebuilds them from the chosen calorie target", async () => {
     const user = renderCalculator()
     await fillReferenceInputs(user)

@@ -1,16 +1,9 @@
+import type { GlossaryEntry } from "@/lib/breakdown/types"
+
 import { ACTIVITY_MODEL } from "./activity"
 import { INPUT_LIMITS } from "./constants"
 
-export interface GlossaryEntry {
-  /** TeX used to render the symbol. */
-  tex: string
-  /** Plain-text symbol for copying. */
-  text: string
-  name: string
-  unit: string
-  range: string
-  meaning: string
-}
+export type { GlossaryEntry }
 
 const { weight, heightCm, age, bodyFat, steps, sessions } = INPUT_LIMITS
 const { stepCap, sessionCap, stepMax, trainingMax, overlapMax, multiplierMin, multiplierMax } =

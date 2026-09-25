@@ -4,6 +4,7 @@ import { CoachingCta } from "@/components/marketing/coaching-cta"
 import { Reveal } from "@/components/motion/reveal"
 import { galleryImages } from "@/config/gallery"
 import { GalleryGrid } from "@/features/gallery/components/gallery-grid"
+import { getViewer } from "@/features/profile/queries"
 
 const description =
   "Meet days, podiums and platform lifts from the Forte Strength team. Every photo is one of our athletes."
@@ -19,7 +20,9 @@ export const metadata: Metadata = {
   },
 }
 
-export default function GalleryPage() {
+export default async function GalleryPage() {
+  const { client } = await getViewer()
+
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
       <Reveal>
@@ -38,9 +41,11 @@ export default function GalleryPage() {
 
       <GalleryGrid images={galleryImages} />
 
-      <div className="mt-16 sm:mt-20">
-        <CoachingCta />
-      </div>
+      {!client && (
+        <div className="mt-16 sm:mt-20">
+          <CoachingCta />
+        </div>
+      )}
     </div>
   )
 }
