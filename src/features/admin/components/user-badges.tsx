@@ -1,4 +1,10 @@
-import { CheckIcon, HandshakeIcon, LockIcon, ShieldCheckIcon } from "lucide-react"
+import {
+  CheckIcon,
+  HandshakeIcon,
+  LockIcon,
+  MessageSquareTextIcon,
+  ShieldCheckIcon,
+} from "lucide-react"
 import Image from "next/image"
 
 /** A website user the coach has marked as a coaching client. */
@@ -7,6 +13,20 @@ export function ClientBadge() {
     <span className="inline-flex items-center gap-1 rounded-full bg-primary/15 px-2 py-0.5 text-xs font-medium whitespace-nowrap text-highlight ring-1 ring-primary/30">
       <HandshakeIcon className="size-3" aria-hidden="true" />
       Client
+    </span>
+  )
+}
+
+/** Whether they've agreed to text updates. */
+export function SmsBadge({ optedIn }: { optedIn: boolean }) {
+  return optedIn ? (
+    <span className="inline-flex items-center gap-1 rounded-full bg-primary/15 px-2 py-0.5 text-xs font-medium whitespace-nowrap text-highlight">
+      <MessageSquareTextIcon className="size-3" aria-hidden="true" />
+      Texts on
+    </span>
+  ) : (
+    <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium whitespace-nowrap text-muted-foreground">
+      Texts off
     </span>
   )
 }

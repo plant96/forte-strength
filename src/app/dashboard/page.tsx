@@ -9,6 +9,7 @@ import type { LinkListItem } from "@/features/dashboard/components/link-lists"
 import { getTeamPrFeed } from "@/features/pr-feed/queries"
 import { getBestLifts } from "@/features/pr-tracker/queries"
 import { WEIGHT_UNIT_FROM_DB } from "@/features/profile/mappers"
+import { getSmsState } from "@/features/sms/queries"
 import { canAccessClientArea, requireUser } from "@/server/auth"
 
 export const metadata: Metadata = {
@@ -38,9 +39,10 @@ export default async function DashboardPage() {
   const user = await requireUser()
   if (!canAccessClientArea(user)) redirect("/")
 
-  const [lifts, prFeed, comingSoon] = await Promise.all([
+  const [lifts, prFeed, sms, comingSoon] = await Promise.all([
     getBestLifts(user.id),
     getTeamPrFeed(user.id),
+    getSmsState(user),
     listComingSoon().catch((error: unknown) => {
       console.error("[dashboard] Could not load coming-soon items:", error)
       return EMPTY_COMING_SOON
@@ -52,6 +54,7 @@ export default async function DashboardPage() {
       firstName={user.firstName}
       lifts={lifts}
       prFeed={prFeed}
+      sms={sms}
       unit={WEIGHT_UNIT_FROM_DB[user.liftUnit]}
       tools={listItems(tools, comingSoon.tools)}
       resources={listItems(resources, comingSoon.resources)}

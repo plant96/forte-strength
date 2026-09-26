@@ -19,7 +19,13 @@ export function SiteFooter() {
               href="/privacy"
               className="underline-offset-4 hover:text-foreground hover:underline"
             >
-              Analytics privacy
+              Privacy
+            </Link>
+            <Link
+              href="/terms"
+              className="underline-offset-4 hover:text-foreground hover:underline"
+            >
+              Terms
             </Link>
           </div>
         </div>

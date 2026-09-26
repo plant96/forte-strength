@@ -10,8 +10,10 @@ import {
   profileRecordToTdeeInput,
   WEIGHT_UNIT_FROM_DB,
 } from "@/features/profile/mappers"
+import { SmsSettings } from "@/features/sms/components/sms-settings"
+import { getSmsState } from "@/features/sms/queries"
 import { calculateTdee } from "@/features/tdee/lib/tdee"
-import { isAdmin, requireUser, syncCurrentUser } from "@/server/auth"
+import { canAccessClientArea, isAdmin, requireUser, syncCurrentUser } from "@/server/auth"
 
 export const metadata: Metadata = { title: "Profile & settings", robots: { index: false } }
 
@@ -20,6 +22,9 @@ export default async function ProfilePage() {
   const profile = user.profile
   const estimate = profile ? calculateTdee(profileRecordToTdeeInput(profile)).tdee : null
   const name = [user.firstName, user.lastName].filter(Boolean).join(" ") || "Your account"
+  // Clients can turn texts on; anyone who has them on can always turn them off.
+  const canOptIn = canAccessClientArea(user)
+  const sms = canOptIn || user.smsOptInAt ? await getSmsState(user) : null
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
@@ -36,11 +41,14 @@ export default async function ProfilePage() {
       </header>
 
       <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-8">
-        <ProfileForm
-          initialValues={
-            profile ? profileRecordToFormInput(profile, WEIGHT_UNIT_FROM_DB[user.liftUnit]) : null
-          }
-        />
+        <div className="flex min-w-0 flex-col gap-6">
+          {sms && <SmsSettings state={sms} canOptIn={canOptIn} />}
+          <ProfileForm
+            initialValues={
+              profile ? profileRecordToFormInput(profile, WEIGHT_UNIT_FROM_DB[user.liftUnit]) : null
+            }
+          />
+        </div>
 
         <aside className="flex flex-col gap-4 lg:sticky lg:top-24">
           <div className="flex flex-col gap-4 rounded-2xl bg-card p-5 ring-1 ring-foreground/10">

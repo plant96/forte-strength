@@ -231,6 +231,7 @@ export async function listUsers({
         onboardingSkippedAt: true,
         onboardingRequired: true,
         clientSince: true,
+        smsOptInAt: true,
         createdAt: true,
       },
     }),

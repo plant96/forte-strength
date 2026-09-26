@@ -4,7 +4,7 @@ import type { Metadata } from "next"
 
 import { AdminHeader, EmptyState, Pagination } from "@/features/admin/components/admin-ui"
 import { SearchInput } from "@/features/admin/components/search-input"
-import { OnboardingBadge, RoleBadge } from "@/features/admin/components/user-badges"
+import { OnboardingBadge, RoleBadge, SmsBadge } from "@/features/admin/components/user-badges"
 import { UserList, type UserColumn } from "@/features/admin/components/user-list"
 import { listUsers } from "@/features/admin/queries"
 import { parseUserFilters, toQueryString } from "@/features/admin/search-params"
@@ -34,6 +34,7 @@ const COLUMNS: UserColumn[] = [
       />
     ),
   },
+  { header: "Texts", cell: (user) => <SmsBadge optedIn={Boolean(user.smsOptInAt)} /> },
   { header: "Role", cell: (user) => <RoleBadge role={user.role} /> },
   {
     header: "PRs",
@@ -96,6 +97,7 @@ export default async function AdminClientsPage(props: PageProps<"/admin/clients"
                   skippedAt={user.onboardingSkippedAt}
                   required={user.onboardingRequired}
                 />
+                <SmsBadge optedIn={Boolean(user.smsOptInAt)} />
                 <RoleBadge role={user.role} />
               </>
             )}

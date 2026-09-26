@@ -93,6 +93,11 @@ export const siteConfig = {
     { title: "Resources", kind: "resources", items: resources },
   ] satisfies NavEntry[],
   cta: { title: "Apply", href: "/application" },
+  /**
+   * Where people reach a person: named in the SMS terms (carriers require a monitored
+   * contact for HELP) and the privacy policy. Change it here when a domain inbox exists.
+   */
+  supportEmail: "Tym.26911@gmail.com",
 } as const
 
 /**

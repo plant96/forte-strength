@@ -3,6 +3,7 @@ import {
   CalendarIcon,
   HandshakeIcon,
   MailIcon,
+  MessageSquareTextIcon,
   TrophyIcon,
   UserRoundXIcon,
 } from "lucide-react"
@@ -24,6 +25,7 @@ import { Button } from "@/components/ui/button"
 import { getUserDetail } from "@/features/admin/queries"
 import { ageOn, dateToBirthday, formatBirthday } from "@/features/profile/lib/birthday"
 import { profileRecordToTdeeInput } from "@/features/profile/mappers"
+import { formatUsPhone } from "@/features/sms/lib/phone"
 import { getIntensityLevel, type IntensityId } from "@/features/tdee/lib/constants"
 import { calculateTdee } from "@/features/tdee/lib/tdee"
 import { formatDate, formatRelative } from "@/lib/dates"
@@ -82,6 +84,23 @@ export default async function AdminUserPage(props: PageProps<"/admin/users/[id]"
                 Client since {formatDate(user.clientSince)}
               </span>
             )}
+            <span className="inline-flex items-center gap-1.5">
+              <MessageSquareTextIcon className="size-4 text-highlight" />
+              {user.smsOptInAt && user.smsPhone ? (
+                <>
+                  Texts on: {formatUsPhone(user.smsPhone)}, since {formatDate(user.smsOptInAt)}
+                </>
+              ) : user.clientSince ? (
+                <>
+                  Texts off. Ask them to turn texts on at{" "}
+                  <Link href="/sms" className="text-highlight hover:underline">
+                    fortestrength.org/sms
+                  </Link>
+                </>
+              ) : (
+                "Texts off"
+              )}
+            </span>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-3">

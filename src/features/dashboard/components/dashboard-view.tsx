@@ -5,6 +5,8 @@ import { m } from "motion/react"
 import { PrFeed } from "@/features/pr-feed/components/pr-feed"
 import type { FeedPr } from "@/features/pr-feed/lib/feed"
 import type { BestLifts } from "@/features/pr-tracker/lib/lifts"
+import { SmsDashboardPrompt } from "@/features/sms/components/sms-dashboard-prompt"
+import type { SmsState } from "@/features/sms/queries"
 import type { WeightUnit } from "@/lib/units"
 
 import { BestLiftsTable } from "./best-lifts-table"
@@ -17,20 +19,22 @@ interface DashboardViewProps {
   lifts: BestLifts
   /** Null when the feed couldn't be read; the section is left out rather than empty. */
   prFeed: FeedPr[] | null
+  sms: SmsState
   unit: WeightUnit
   tools: LinkListItem[]
   resources: LinkListItem[]
 }
 
 /**
- * The client home. One choreography: the greeting rises first, then the team's PR feed,
- * then the lifts card and the two lists follow in a stagger; inside each, rows and numbers
+ * The client home. One choreography: the greeting rises first, then the text-updates
+ * card (until they opt in), the team's PR feed, then the lifts card and the two lists follow in a stagger; inside each, rows and numbers
  * take their turn. Two columns from `lg` up, a single stack below it.
  */
 export function DashboardView({
   firstName,
   lifts,
   prFeed,
+  sms,
   unit,
   tools,
   resources,
@@ -43,6 +47,8 @@ export function DashboardView({
       className="relative mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-10 sm:px-6 sm:py-14"
     >
       <Greeting firstName={firstName} />
+
+      <SmsDashboardPrompt state={sms} />
 
       {prFeed && <PrFeed prs={prFeed} unit={unit} />}
 

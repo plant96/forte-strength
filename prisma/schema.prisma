@@ -64,6 +64,13 @@ model User {
   /// from `Profile.weightUnit`: plenty of lifters compete in kg but train in lb.
   /// Lives here rather than on Profile so someone who skipped onboarding still has one.
   liftUnit            WeightUnit @default(LB)
+  /// The mobile number for text updates, E.164 ("+15551234567"). Kept after an opt-out so
+  /// turning texts back on doesn't mean typing it again; `smsOptInAt` says whether to text.
+  smsPhone            String?
+  /// Set while they've agreed to text updates; null when they never have or opted out.
+  smsOptInAt          DateTime?
+  /// Last "Not now" on the dashboard's text-updates prompt, which then waits a while.
+  smsPromptSnoozedAt  DateTime?
   createdAt           DateTime   @default(now())
   updatedAt           DateTime   @updatedAt
   profile             Profile?
@@ -236,6 +243,43 @@ model BugReport {
   userAgent   String?         @db.Text
 
   @@index([status, createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// Text message consent (the SMS program's opt-in record)
+// ---------------------------------------------------------------------------
+
+enum SmsConsentAction {
+  OPT_IN
+  OPT_OUT
+}
+
+/// Where the choice was made.
+enum SmsConsentSource {
+  DASHBOARD
+  SETTINGS
+  SMS_PAGE
+}
+
+/// Append-only proof of every opt-in and opt-out: who, which number, when, from where, and
+/// the exact wording they agreed to. `userId` is a loose reference, not a relation, so the
+/// record outlives the account — consent has to be provable after the fact.
+model SmsConsentEvent {
+  id             String           @id @default(cuid())
+  userId         String
+  /// E.164, the number the choice applies to.
+  phone          String
+  action         SmsConsentAction
+  source         SmsConsentSource
+  /// The disclosure shown beside the checkbox, verbatim. Null for an opt-out.
+  consentText    String?          @db.Text
+  consentVersion String?
+  ipAddress      String?
+  userAgent      String?          @db.Text
+  createdAt      DateTime         @default(now()) @db.Timestamptz(3)
+
+  @@index([userId, createdAt])
+  @@index([phone, createdAt])
 }
 
 // ---------------------------------------------------------------------------

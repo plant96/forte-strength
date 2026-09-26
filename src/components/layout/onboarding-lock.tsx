@@ -4,7 +4,14 @@ import { useAuth } from "@clerk/nextjs"
 import { redirect, usePathname } from "next/navigation"
 
 /** Where an account that must finish onboarding is still allowed to be. */
-export const LOCK_ALLOWED_PATHS = ["/onboarding", "/sign-in", "/sign-up"] as const
+export const LOCK_ALLOWED_PATHS = [
+  "/onboarding",
+  "/sign-in",
+  "/sign-up",
+  // Legal pages stay reachable: the consent and sign-up flows link to them.
+  "/privacy",
+  "/terms",
+] as const
 
 export function isAllowedWhileLocked(pathname: string) {
   return LOCK_ALLOWED_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`))
